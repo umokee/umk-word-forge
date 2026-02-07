@@ -327,6 +327,23 @@ in
         limit_conn_zone $binary_remote_addr zone=wf_conn_limit:10m;
       '';
 
+      # Default server: drop requests that don't match a known Host header.
+      # This silently kills bot/scanner traffic before it reaches any backend.
+      virtualHosts."_wf_default" = {
+        default = true;
+        listen = [
+          {
+            addr = "0.0.0.0";
+            port = publicPort;
+            ssl = false;
+          }
+        ];
+        serverName = "_";
+        locations."/" = {
+          return = "444";
+        };
+      };
+
       virtualHosts."${domain}" = {
         listen = [
           {

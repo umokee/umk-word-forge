@@ -18,18 +18,18 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    apiFetch('/health')
+    apiFetch('/auth/check')
       .then(() => setState('ok'))
       .catch((e: Error) => {
         if (e.message === 'AUTH_REQUIRED') setState('need_key');
-        else setState('ok');
+        else setState('ok'); // no API_KEY configured = open access
       });
   }, []);
 
   const submit = () => {
     setApiKey(key);
     setError('');
-    apiFetch('/health')
+    apiFetch('/auth/check')
       .then(() => {
         setState('ok');
         queryClient.invalidateQueries();

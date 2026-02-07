@@ -65,3 +65,10 @@ app.include_router(settings_router)
 @app.get("/api/health")
 def health():
     return {"status": "ok", "version": "2.0.0"}
+
+
+@app.get("/api/auth/check")
+def auth_check():
+    """Protected endpoint — returns 200 only with a valid API key.
+    Used by the frontend AuthGate to decide whether to show the login screen."""
+    return {"authenticated": True}
