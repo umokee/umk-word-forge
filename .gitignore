@@ -11,7 +11,9 @@ venv/
 .venv/
 
 # Database
-data/*.db
+*.db
+data/
+frontend/data/
 
 # Environment
 .env
