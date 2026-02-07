@@ -10,12 +10,11 @@ let
   enable = helpers.hasIn "services" "wordforge";
 
   gitRepo = "https://github.com/umokee/umk-word-forge.git";
-  gitBranch = "main";
+  gitBranch = "claude/build-app-from-spec-qPE1y";
 
   domain = "words.umkcloud.xyz";
-  useHttpOnly = true;
-  publicPort = 8888;
-  backendPort = 8000;
+  publicPort = 8889;
+  backendPort = 8001;
   backendHost = "127.0.0.1";
 
   projectPath = "/var/lib/wordforge";
@@ -48,10 +47,8 @@ in
     users.groups.${group} = { };
 
     networking.firewall.allowedTCPPorts = [
-      publicPort
-    ]
-    ++ lib.optionals (!useHttpOnly) [
       80
+      publicPort
     ];
 
     systemd.tmpfiles.rules = [
@@ -59,26 +56,23 @@ in
       "d ${secretsDir} 0700 ${user} ${group} -"
       "d ${logDir} 0750 ${user} ${group} -"
       "d ${dataDir} 0750 ${user} ${group} -"
+      "f ${logDir}/app.log 0640 ${user} ${group} -"
     ];
 
     # --- Secrets (sops-nix) ---
-    sops.secrets."wordforge-api-key" = {
+    sops.secrets."word-forge/api-key" = {
       owner = user;
     };
-    sops.secrets."wordforge-gemini-key" = {
-      owner = user;
-    };
-    sops.secrets."wordforge-groq-key" = {
+    sops.secrets."word-forge/gemini-key" = {
       owner = user;
     };
 
     sops.templates."wordforge-env" = {
       content = ''
-        API_KEY=${config.sops.placeholder."wordforge-api-key"}
-        GEMINI_API_KEY=${config.sops.placeholder."wordforge-gemini-key"}
-        GROQ_API_KEY=${config.sops.placeholder."wordforge-groq-key"}
+        API_KEY=${config.sops.placeholder."word-forge/api-key"}
+        GEMINI_API_KEY=${config.sops.placeholder."word-forge/gemini-key"}
         DATABASE_URL=sqlite:///${dataDir}/wordforge.db
-        CORS_ORIGINS=http://${domain}:${toString publicPort},https://${domain},https://${domain}:${toString publicPort}
+        CORS_ORIGINS=http://${domain}:${toString publicPort},https://${domain}
         DEBUG=false
         WORDFORGE_LOG_DIR=${logDir}
         WORDFORGE_LOG_FILE=app.log
@@ -87,15 +81,9 @@ in
       group = group;
     };
 
-    security.acme = lib.mkIf (!useHttpOnly) {
-      acceptTerms = true;
-      defaults.email = "admin@${domain}";
-
-      certs."${domain}" = {
-        listenHTTP = ":80";
-        group = "nginx";
-        postRun = "systemctl reload nginx";
-      };
+    security.acme = {
+      acceptTerms = lib.mkDefault true;
+      defaults.email = lib.mkDefault "admin@umkcloud.xyz";
     };
 
     # --- Git sync ---
@@ -315,51 +303,34 @@ in
 
     # --- nginx reverse proxy ---
     services.nginx = {
-      enable = true;
+      enable = lib.mkDefault true;
 
-      recommendedGzipSettings = true;
-      recommendedOptimisation = true;
-      recommendedProxySettings = true;
-      recommendedTlsSettings = true;
+      recommendedGzipSettings = lib.mkDefault true;
+      recommendedOptimisation = lib.mkDefault true;
+      recommendedProxySettings = lib.mkDefault true;
+      recommendedTlsSettings = lib.mkDefault true;
 
       appendHttpConfig = ''
         limit_req_zone $binary_remote_addr zone=wf_api_limit:10m rate=10r/s;
         limit_conn_zone $binary_remote_addr zone=wf_conn_limit:10m;
       '';
 
-      # Default server: drop requests that don't match a known Host header.
-      # This silently kills bot/scanner traffic before it reaches any backend.
-      virtualHosts."_wf_default" = {
-        default = true;
+      virtualHosts."${domain}" = {
+        addSSL = true;
+        enableACME = true;
+
         listen = [
           {
             addr = "0.0.0.0";
-            port = publicPort;
+            port = 80;
             ssl = false;
           }
-        ];
-        serverName = "_";
-        locations."/" = {
-          return = "444";
-        };
-      };
-
-      virtualHosts."${domain}" = {
-        listen = [
           {
             addr = "0.0.0.0";
             port = publicPort;
-            ssl = !useHttpOnly;
+            ssl = true;
           }
         ];
-
-        enableACME = false;
-        forceSSL = false;
-
-        sslCertificate = lib.mkIf (!useHttpOnly) "/var/lib/acme/${domain}/fullchain.pem";
-        sslCertificateKey = lib.mkIf (!useHttpOnly) "/var/lib/acme/${domain}/key.pem";
-
-        serverName = "${domain}";
 
         locations."/api/" = {
           proxyPass = "http://${backendHost}:${toString backendPort}";
