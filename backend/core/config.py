@@ -8,8 +8,11 @@ class Settings(BaseSettings):
     GROQ_API_KEY: str = ""
     API_KEY: str = ""
     CORS_ORIGINS: str = "http://localhost:5173"
-    DEBUG: bool = True
+    DEBUG: bool = False
+    WORDFORGE_LOG_DIR: str = ""
+    WORDFORGE_LOG_FILE: str = "app.log"
 
+    # Alias so NixOS env WORDFORGE_API_KEY also works
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 
