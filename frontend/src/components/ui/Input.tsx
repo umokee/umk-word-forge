@@ -1,0 +1,44 @@
+import React from 'react';
+import { cn } from '@/lib/utils';
+
+interface InputProps {
+  label?: string;
+  placeholder?: string;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  type?: string;
+  className?: string;
+  error?: string;
+  hint?: string;
+}
+
+export function Input({
+  label,
+  placeholder,
+  value,
+  onChange,
+  type = 'text',
+  className,
+  error,
+  hint,
+}: InputProps) {
+  return (
+    <div className={cn('flex flex-col gap-1.5', className)}>
+      {label && (
+        <label className="text-sm font-medium text-[#E8E8EC]">{label}</label>
+      )}
+      <input
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        className={cn(
+          'bg-[#1C1C20] border border-[#2A2A30] focus:border-indigo-500 text-[#E8E8EC] rounded-sm px-3 py-2 text-sm placeholder:text-[#5C5C66] outline-none transition-colors',
+          error && 'border-red-500 focus:border-red-500'
+        )}
+      />
+      {error && <p className="text-xs text-red-500">{error}</p>}
+      {hint && !error && <p className="text-xs text-[#5C5C66]">{hint}</p>}
+    </div>
+  );
+}
