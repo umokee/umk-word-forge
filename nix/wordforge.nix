@@ -327,7 +327,7 @@ in
         limit_conn_zone $binary_remote_addr zone=wf_conn_limit:10m;
       '';
 
-      virtualHosts."${if useHttpOnly then "localhost" else domain}" = {
+      virtualHosts."${domain}" = {
         listen = [
           {
             addr = "0.0.0.0";
@@ -342,7 +342,7 @@ in
         sslCertificate = lib.mkIf (!useHttpOnly) "/var/lib/acme/${domain}/fullchain.pem";
         sslCertificateKey = lib.mkIf (!useHttpOnly) "/var/lib/acme/${domain}/key.pem";
 
-        serverName = "${domain} _";
+        serverName = "${domain}";
 
         locations."/api/" = {
           proxyPass = "http://${backendHost}:${toString backendPort}";
