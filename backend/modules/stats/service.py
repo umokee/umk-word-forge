@@ -1,10 +1,13 @@
 from datetime import date, timedelta
+import logging
 from sqlalchemy.orm import Session
 
 from backend.shared.date_utils import today
 from backend.shared.constants import COVERAGE_THRESHOLDS
 from .schemas import DashboardResponse, DailyStatsResponse, CoverageResponse, HeatmapData
 from .repository import get_or_create_today, get_daily_stats_range, get_streak as repo_get_streak, update_daily_stats
+
+logger = logging.getLogger(__name__)
 
 
 def get_dashboard(db: Session) -> DashboardResponse:
@@ -38,10 +41,12 @@ def get_dashboard(db: Session) -> DashboardResponse:
                 "accuracy": 0,
             })
 
-    # Level distribution and total known words are placeholders
-    # to be populated by cross-module calls when the words module exists
-    level_distribution: dict = {}
-    total_words_known = 0
+    # Level distribution from the learning module
+    from backend.modules.learning.repository import LearningRepository
+    level_distribution = LearningRepository.count_by_level(db)
+    total_words_known = sum(
+        count for level, count in level_distribution.items() if level >= 1
+    )
     coverage_percent = calculate_coverage(total_words_known)
 
     return DashboardResponse(

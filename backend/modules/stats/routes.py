@@ -29,13 +29,12 @@ def daily_stats(
 
 @router.get("/coverage", response_model=CoverageResponse)
 def coverage(db: Session = Depends(get_db)):
-    # Total known words would come from a cross-module query
-    # For now we use a placeholder; integrate with words module later
-    known_words = 0
-    coverage_pct = service.calculate_coverage(known_words)
-
-    # Calculate next milestone
+    from backend.modules.learning.repository import LearningRepository
     from backend.shared.constants import COVERAGE_THRESHOLDS
+
+    level_counts = LearningRepository.count_by_level(db)
+    known_words = sum(c for lv, c in level_counts.items() if lv >= 1)
+    coverage_pct = service.calculate_coverage(known_words)
 
     next_milestone = {}
     for words_needed, cov in COVERAGE_THRESHOLDS:

@@ -78,7 +78,7 @@ in
         GEMINI_API_KEY=${config.sops.placeholder."wordforge-gemini-key"}
         GROQ_API_KEY=${config.sops.placeholder."wordforge-groq-key"}
         DATABASE_URL=sqlite:///${dataDir}/wordforge.db
-        CORS_ORIGINS=http://${domain}:${toString publicPort},https://${domain}
+        CORS_ORIGINS=http://${domain}:${toString publicPort},https://${domain},https://${domain}:${toString publicPort}
         DEBUG=false
         WORDFORGE_LOG_DIR=${logDir}
         WORDFORGE_LOG_FILE=app.log

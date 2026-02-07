@@ -13,17 +13,32 @@ const queryClient = new QueryClient({
 });
 
 function AuthGate({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<'checking' | 'ok' | 'need_key'>('checking');
+  const [state, setState] = useState<'checking' | 'ok' | 'need_key' | 'error'>('checking');
   const [key, setKey] = useState('');
   const [error, setError] = useState('');
+  const [connectError, setConnectError] = useState('');
 
-  useEffect(() => {
+  const checkAuth = () => {
+    setState('checking');
+    setConnectError('');
     apiFetch('/auth/check')
       .then(() => setState('ok'))
       .catch((e: Error) => {
-        if (e.message === 'AUTH_REQUIRED') setState('need_key');
-        else setState('ok'); // no API_KEY configured = open access
+        if (e.message === 'AUTH_REQUIRED') {
+          setState('need_key');
+        } else if (e.message.startsWith('HTTP ')) {
+          // Server responded but with an unexpected error — try open access
+          setState('ok');
+        } else {
+          // Network error or backend unreachable
+          setConnectError(e.message || 'Cannot reach backend');
+          setState('error');
+        }
       });
+  };
+
+  useEffect(() => {
+    checkAuth();
   }, []);
 
   const submit = () => {
@@ -36,7 +51,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       })
       .catch((e: Error) => {
         if (e.message === 'AUTH_REQUIRED') setError('Invalid API key');
-        else setState('ok');
+        else setError(e.message || 'Connection error');
       });
   };
 
@@ -44,6 +59,24 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex items-center justify-center h-screen bg-[#0A0A0B]">
         <div className="animate-pulse text-[#5C5C66] text-sm">Connecting...</div>
+      </div>
+    );
+  }
+
+  if (state === 'error') {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#0A0A0B]">
+        <div className="bg-[#141416] border border-[#2A2A30] rounded-sm p-8 w-full max-w-sm text-center">
+          <h1 className="text-xl font-bold text-[#E8E8EC] mb-1">WordForge</h1>
+          <p className="text-sm text-red-400 mb-4">{connectError || 'Cannot connect to server'}</p>
+          <p className="text-xs text-[#5C5C66] mb-6">The backend service may be starting up. Please wait and try again.</p>
+          <button
+            onClick={checkAuth}
+            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-sm px-4 py-2 text-sm transition-colors"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
