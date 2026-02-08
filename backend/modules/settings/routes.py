@@ -8,11 +8,11 @@ from . import service
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
 
-@router.get("/", response_model=SettingsResponse)
+@router.get("", response_model=SettingsResponse)
 def get_settings(db: Session = Depends(get_db)):
     return service.get_settings(db)
 
 
-@router.patch("/", response_model=SettingsResponse)
+@router.patch("", response_model=SettingsResponse)
 def update_settings(data: SettingsUpdate, db: Session = Depends(get_db)):
     return service.update_settings(db, data)

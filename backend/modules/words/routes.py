@@ -15,7 +15,7 @@ router = APIRouter(prefix="/api/words", tags=["words"])
 _service = WordService()
 
 
-@router.get("/", response_model=PaginatedWords)
+@router.get("", response_model=PaginatedWords)
 def list_words(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -50,7 +50,7 @@ def get_word(
     return _service.get_word(db, word_id)
 
 
-@router.post("/", response_model=WordResponse, status_code=201)
+@router.post("", response_model=WordResponse, status_code=201)
 def create_word(
     word_create: WordCreate,
     db: Session = Depends(get_db),
