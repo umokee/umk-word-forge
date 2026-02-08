@@ -4,6 +4,9 @@ import Layout from './components/layout/Layout';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Train = lazy(() => import('./pages/Train'));
+const TrainSelector = lazy(() => import('./pages/TrainSelector'));
+const TrainPhrasal = lazy(() => import('./pages/TrainPhrasal'));
+const TrainIrregular = lazy(() => import('./pages/TrainIrregular'));
 const Words = lazy(() => import('./pages/Words'));
 const WordDetail = lazy(() => import('./pages/WordDetail'));
 const Stats = lazy(() => import('./pages/Stats'));
@@ -21,8 +24,13 @@ export default function App() {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
-        {/* Full-screen training route (no layout chrome) */}
-        <Route path="/train" element={<Train />} />
+        {/* Training mode selector (full-screen) */}
+        <Route path="/train" element={<TrainSelector />} />
+
+        {/* Full-screen training routes (no layout chrome) */}
+        <Route path="/train/words" element={<Train />} />
+        <Route path="/train/phrasal" element={<TrainPhrasal />} />
+        <Route path="/train/irregular" element={<TrainIrregular />} />
 
         {/* All other routes share the sidebar/header layout */}
         <Route element={<Layout />}>

@@ -13,7 +13,10 @@
       "Bash(git push:*)",
       "Bash(python backend/migrate_settings.py:*)",
       "Bash(nix-shell:*)",
-      "Bash(npm run typecheck:*)"
+      "Bash(npm run typecheck:*)",
+      "WebSearch",
+      "Bash(python -c:*)",
+      "Bash(/nix/store/2p31md1i38fng7sklgckn9vsk6aqkqi9-python3-3.13.11-env/bin/python:*)"
     ]
   }
 }

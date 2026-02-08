@@ -9,8 +9,12 @@ from backend.shared.constants import (
     LOW_STABILITY_THRESHOLD,
 )
 from backend.modules.learning.exceptions import WordNotInLearningError, WordAlreadyInLearningError
-from backend.modules.learning.models import UserWord
-from backend.modules.learning.repository import LearningRepository
+from backend.modules.learning.models import UserWord, UserPhrasalVerb, UserIrregularVerb
+from backend.modules.learning.repository import (
+    LearningRepository,
+    PhrasalVerbLearningRepository,
+    IrregularVerbLearningRepository,
+)
 from backend.modules.learning.schemas import (
     ReviewCreate,
     MasteryResult,
@@ -19,8 +23,18 @@ from backend.modules.learning.schemas import (
     UserWordWithWord,
     DueWordsResponse,
     PaginatedUserWords,
+    UserPhrasalVerbResponse,
+    UserPhrasalVerbWithPhrasal,
+    PhrasalVerbReviewCreate,
+    DuePhrasalVerbsResponse,
+    PaginatedUserPhrasalVerbs,
+    UserIrregularVerbResponse,
+    UserIrregularVerbWithIrregular,
+    IrregularVerbReviewCreate,
+    DueIrregularVerbsResponse,
+    PaginatedUserIrregularVerbs,
 )
-from backend.modules.words.models import Word
+from backend.modules.words.models import Word, PhrasalVerb, IrregularVerb
 
 _STATE_NAMES = {0: "New", 1: "Learning", 2: "Review", 3: "Relearning"}
 
@@ -286,3 +300,397 @@ class LearningService:
             translations=word.translations if word else [],
             part_of_speech=word.part_of_speech if word else None,
         )
+
+
+class PhrasalVerbLearningService:
+    """Service for learning phrasal verbs with FSRS scheduling."""
+
+    _MIN_MASTERY = 1
+    _MAX_MASTERY = 6  # 6 exercise types for phrasal verbs
+
+    def __init__(self) -> None:
+        self._repo = PhrasalVerbLearningRepository()
+        self._scheduler = Scheduler()
+
+    @staticmethod
+    def _card_from_user_phrasal_verb(upv: UserPhrasalVerb) -> Card:
+        """Reconstruct an FSRS Card from persisted UserPhrasalVerb fields."""
+        card = Card()
+        card.stability = upv.fsrs_stability if upv.fsrs_stability else None
+        card.difficulty = upv.fsrs_difficulty if upv.fsrs_difficulty else None
+        card.state = State(upv.fsrs_state) if upv.fsrs_state in (1, 2, 3) else State.Learning
+        card.step = 0 if upv.fsrs_state == 0 else None
+        card.last_review = upv.fsrs_last_review
+        card.due = upv.next_review_at or datetime.now(timezone.utc)
+        return card
+
+    @staticmethod
+    def _update_user_phrasal_verb_from_card(upv: UserPhrasalVerb, card: Card) -> None:
+        """Persist FSRS Card fields back to UserPhrasalVerb."""
+        upv.fsrs_stability = card.stability or 0
+        upv.fsrs_difficulty = card.difficulty or 0
+        upv.fsrs_state = card.state.value if card.state else 0
+        upv.fsrs_last_review = card.last_review
+        upv.next_review_at = card.due
+
+    def initialize_phrasal_verb(self, db: Session, phrasal_verb_id: int) -> UserPhrasalVerb:
+        """Add a phrasal verb to the learning list."""
+        existing = self._repo.get_user_phrasal_verb(db, phrasal_verb_id)
+        if existing:
+            raise WordAlreadyInLearningError(phrasal_verb_id)
+
+        pv = db.query(PhrasalVerb).filter(PhrasalVerb.id == phrasal_verb_id).first()
+        if not pv:
+            from backend.modules.words.exceptions import WordNotFoundError
+            raise WordNotFoundError(phrasal_verb_id)
+
+        card = Card()
+
+        user_pv = self._repo.create_user_phrasal_verb(
+            db,
+            phrasal_verb_id=phrasal_verb_id,
+            mastery_level=1,
+            fsrs_stability=card.stability or 0,
+            fsrs_difficulty=card.difficulty or 0,
+            fsrs_state=0,
+            fsrs_last_review=None,
+            next_review_at=card.due,
+        )
+
+        return user_pv
+
+    def record_review(
+        self, db: Session, phrasal_verb_id: int, review: PhrasalVerbReviewCreate
+    ) -> MasteryResult:
+        """Record a review and update FSRS scheduling + mastery level."""
+        user_pv = self._repo.get_user_phrasal_verb(db, phrasal_verb_id)
+        if not user_pv:
+            raise WordNotInLearningError(phrasal_verb_id)
+
+        card = self._card_from_user_phrasal_verb(user_pv)
+        rating = Rating(review.rating)
+
+        new_card, _log = self._scheduler.review_card(card, rating)
+        self._update_user_phrasal_verb_from_card(user_pv, new_card)
+
+        user_pv.fsrs_reps += 1
+        if rating == Rating.Again:
+            user_pv.fsrs_lapses += 1
+
+        if new_card.last_review and card.last_review:
+            elapsed = (new_card.last_review - card.last_review).days
+            user_pv.fsrs_elapsed_days = max(elapsed, 0)
+        else:
+            user_pv.fsrs_elapsed_days = 0
+
+        if new_card.due and new_card.last_review:
+            scheduled = (new_card.due - new_card.last_review).days
+            user_pv.fsrs_scheduled_days = max(scheduled, 0)
+        else:
+            user_pv.fsrs_scheduled_days = 0
+
+        if review.correct:
+            user_pv.consecutive_correct += 1
+            user_pv.consecutive_wrong = 0
+        else:
+            user_pv.consecutive_wrong += 1
+            user_pv.consecutive_correct = 0
+
+        old_level = user_pv.mastery_level
+        new_level = old_level
+
+        if (
+            user_pv.consecutive_correct >= CONSECUTIVE_CORRECT_TO_LEVEL_UP
+            and rating in (Rating.Good, Rating.Easy)
+        ):
+            new_level = min(old_level + 1, self._MAX_MASTERY)
+            user_pv.consecutive_correct = 0
+
+        if user_pv.consecutive_wrong >= CONSECUTIVE_WRONG_TO_LEVEL_DOWN:
+            new_level = max(old_level - 1, self._MIN_MASTERY)
+            user_pv.consecutive_wrong = 0
+
+        if (
+            rating == Rating.Again
+            and user_pv.fsrs_stability < LOW_STABILITY_THRESHOLD
+            and user_pv.fsrs_lapses > 0
+        ):
+            new_level = max(old_level - 2, self._MIN_MASTERY)
+
+        user_pv.mastery_level = new_level
+        self._repo.update_user_phrasal_verb(db, user_pv)
+
+        self._repo.create_review(
+            db,
+            user_phrasal_verb_id=user_pv.id,
+            exercise_type=review.exercise_type,
+            rating=review.rating,
+            response_time_ms=review.response_time_ms,
+            correct=review.correct,
+        )
+
+        return MasteryResult(
+            new_level=new_level,
+            level_changed=new_level != old_level,
+            next_review=user_pv.next_review_at,
+        )
+
+    def get_due_phrasal_verbs(self, db: Session) -> DuePhrasalVerbsResponse:
+        """Get phrasal verbs that are due for review."""
+        now = datetime.now(timezone.utc)
+        due_items = self._repo.get_due_phrasal_verbs(db)
+
+        overdue: list[UserPhrasalVerbWithPhrasal] = []
+        learning: list[UserPhrasalVerbWithPhrasal] = []
+
+        for upv in due_items:
+            pv = db.query(PhrasalVerb).filter(PhrasalVerb.id == upv.phrasal_verb_id).first()
+            enriched = UserPhrasalVerbWithPhrasal(
+                id=upv.id,
+                phrasal_verb_id=upv.phrasal_verb_id,
+                mastery_level=upv.mastery_level,
+                consecutive_correct=upv.consecutive_correct,
+                consecutive_wrong=upv.consecutive_wrong,
+                fsrs_stability=upv.fsrs_stability,
+                fsrs_difficulty=upv.fsrs_difficulty,
+                fsrs_state=upv.fsrs_state,
+                fsrs_reps=upv.fsrs_reps,
+                fsrs_lapses=upv.fsrs_lapses,
+                next_review_at=upv.next_review_at,
+                created_at=upv.created_at,
+                phrase=pv.phrase if pv else "",
+                base_verb=pv.base_verb if pv else "",
+                particle=pv.particle if pv else "",
+                translations=pv.translations if pv else [],
+                definitions=pv.definitions if pv else [],
+                is_separable=pv.is_separable if pv else True,
+            )
+
+            if upv.fsrs_state in (1, 3):
+                learning.append(enriched)
+            else:
+                overdue.append(enriched)
+
+        new_ids = self._repo.get_new_phrasal_verb_ids(db, limit=100)
+        new_available = len(new_ids)
+
+        return DuePhrasalVerbsResponse(
+            overdue=overdue,
+            learning=learning,
+            new_available=new_available,
+        )
+
+    def get_learning_stats(self, db: Session) -> dict:
+        """Aggregate learning statistics for phrasal verbs."""
+        stats = self._repo.get_learning_stats(db)
+        by_level = self._repo.count_by_level(db)
+        by_state_raw = self._repo.count_by_state(db)
+
+        by_state = {
+            _STATE_NAMES.get(state_int, f"Unknown({state_int})"): count
+            for state_int, count in by_state_raw.items()
+        }
+
+        return {
+            "total_phrasal_verbs": stats["total_phrasal_verbs"],
+            "by_level": by_level,
+            "by_state": by_state,
+        }
+
+
+class IrregularVerbLearningService:
+    """Service for learning irregular verbs with FSRS scheduling."""
+
+    _MIN_MASTERY = 1
+    _MAX_MASTERY = 6  # 6 exercise types for irregular verbs
+
+    def __init__(self) -> None:
+        self._repo = IrregularVerbLearningRepository()
+        self._scheduler = Scheduler()
+
+    @staticmethod
+    def _card_from_user_irregular_verb(uiv: UserIrregularVerb) -> Card:
+        """Reconstruct an FSRS Card from persisted UserIrregularVerb fields."""
+        card = Card()
+        card.stability = uiv.fsrs_stability if uiv.fsrs_stability else None
+        card.difficulty = uiv.fsrs_difficulty if uiv.fsrs_difficulty else None
+        card.state = State(uiv.fsrs_state) if uiv.fsrs_state in (1, 2, 3) else State.Learning
+        card.step = 0 if uiv.fsrs_state == 0 else None
+        card.last_review = uiv.fsrs_last_review
+        card.due = uiv.next_review_at or datetime.now(timezone.utc)
+        return card
+
+    @staticmethod
+    def _update_user_irregular_verb_from_card(uiv: UserIrregularVerb, card: Card) -> None:
+        """Persist FSRS Card fields back to UserIrregularVerb."""
+        uiv.fsrs_stability = card.stability or 0
+        uiv.fsrs_difficulty = card.difficulty or 0
+        uiv.fsrs_state = card.state.value if card.state else 0
+        uiv.fsrs_last_review = card.last_review
+        uiv.next_review_at = card.due
+
+    def initialize_irregular_verb(self, db: Session, irregular_verb_id: int) -> UserIrregularVerb:
+        """Add an irregular verb to the learning list."""
+        existing = self._repo.get_user_irregular_verb(db, irregular_verb_id)
+        if existing:
+            raise WordAlreadyInLearningError(irregular_verb_id)
+
+        iv = db.query(IrregularVerb).filter(IrregularVerb.id == irregular_verb_id).first()
+        if not iv:
+            from backend.modules.words.exceptions import WordNotFoundError
+            raise WordNotFoundError(irregular_verb_id)
+
+        card = Card()
+
+        user_iv = self._repo.create_user_irregular_verb(
+            db,
+            irregular_verb_id=irregular_verb_id,
+            mastery_level=1,
+            fsrs_stability=card.stability or 0,
+            fsrs_difficulty=card.difficulty or 0,
+            fsrs_state=0,
+            fsrs_last_review=None,
+            next_review_at=card.due,
+        )
+
+        return user_iv
+
+    def record_review(
+        self, db: Session, irregular_verb_id: int, review: IrregularVerbReviewCreate
+    ) -> MasteryResult:
+        """Record a review and update FSRS scheduling + mastery level."""
+        user_iv = self._repo.get_user_irregular_verb(db, irregular_verb_id)
+        if not user_iv:
+            raise WordNotInLearningError(irregular_verb_id)
+
+        card = self._card_from_user_irregular_verb(user_iv)
+        rating = Rating(review.rating)
+
+        new_card, _log = self._scheduler.review_card(card, rating)
+        self._update_user_irregular_verb_from_card(user_iv, new_card)
+
+        user_iv.fsrs_reps += 1
+        if rating == Rating.Again:
+            user_iv.fsrs_lapses += 1
+
+        if new_card.last_review and card.last_review:
+            elapsed = (new_card.last_review - card.last_review).days
+            user_iv.fsrs_elapsed_days = max(elapsed, 0)
+        else:
+            user_iv.fsrs_elapsed_days = 0
+
+        if new_card.due and new_card.last_review:
+            scheduled = (new_card.due - new_card.last_review).days
+            user_iv.fsrs_scheduled_days = max(scheduled, 0)
+        else:
+            user_iv.fsrs_scheduled_days = 0
+
+        if review.correct:
+            user_iv.consecutive_correct += 1
+            user_iv.consecutive_wrong = 0
+        else:
+            user_iv.consecutive_wrong += 1
+            user_iv.consecutive_correct = 0
+
+        old_level = user_iv.mastery_level
+        new_level = old_level
+
+        if (
+            user_iv.consecutive_correct >= CONSECUTIVE_CORRECT_TO_LEVEL_UP
+            and rating in (Rating.Good, Rating.Easy)
+        ):
+            new_level = min(old_level + 1, self._MAX_MASTERY)
+            user_iv.consecutive_correct = 0
+
+        if user_iv.consecutive_wrong >= CONSECUTIVE_WRONG_TO_LEVEL_DOWN:
+            new_level = max(old_level - 1, self._MIN_MASTERY)
+            user_iv.consecutive_wrong = 0
+
+        if (
+            rating == Rating.Again
+            and user_iv.fsrs_stability < LOW_STABILITY_THRESHOLD
+            and user_iv.fsrs_lapses > 0
+        ):
+            new_level = max(old_level - 2, self._MIN_MASTERY)
+
+        user_iv.mastery_level = new_level
+        self._repo.update_user_irregular_verb(db, user_iv)
+
+        self._repo.create_review(
+            db,
+            user_irregular_verb_id=user_iv.id,
+            exercise_type=review.exercise_type,
+            rating=review.rating,
+            response_time_ms=review.response_time_ms,
+            correct=review.correct,
+        )
+
+        return MasteryResult(
+            new_level=new_level,
+            level_changed=new_level != old_level,
+            next_review=user_iv.next_review_at,
+        )
+
+    def get_due_irregular_verbs(self, db: Session) -> DueIrregularVerbsResponse:
+        """Get irregular verbs that are due for review."""
+        now = datetime.now(timezone.utc)
+        due_items = self._repo.get_due_irregular_verbs(db)
+
+        overdue: list[UserIrregularVerbWithIrregular] = []
+        learning: list[UserIrregularVerbWithIrregular] = []
+
+        for uiv in due_items:
+            iv = db.query(IrregularVerb).filter(IrregularVerb.id == uiv.irregular_verb_id).first()
+            enriched = UserIrregularVerbWithIrregular(
+                id=uiv.id,
+                irregular_verb_id=uiv.irregular_verb_id,
+                mastery_level=uiv.mastery_level,
+                consecutive_correct=uiv.consecutive_correct,
+                consecutive_wrong=uiv.consecutive_wrong,
+                fsrs_stability=uiv.fsrs_stability,
+                fsrs_difficulty=uiv.fsrs_difficulty,
+                fsrs_state=uiv.fsrs_state,
+                fsrs_reps=uiv.fsrs_reps,
+                fsrs_lapses=uiv.fsrs_lapses,
+                next_review_at=uiv.next_review_at,
+                created_at=uiv.created_at,
+                base_form=iv.base_form if iv else "",
+                past_simple=iv.past_simple if iv else "",
+                past_participle=iv.past_participle if iv else "",
+                translations=iv.translations if iv else [],
+                verb_pattern=iv.verb_pattern if iv else "",
+                transcription_base=iv.transcription_base if iv else None,
+                transcription_past=iv.transcription_past if iv else None,
+                transcription_participle=iv.transcription_participle if iv else None,
+            )
+
+            if uiv.fsrs_state in (1, 3):
+                learning.append(enriched)
+            else:
+                overdue.append(enriched)
+
+        new_ids = self._repo.get_new_irregular_verb_ids(db, limit=100)
+        new_available = len(new_ids)
+
+        return DueIrregularVerbsResponse(
+            overdue=overdue,
+            learning=learning,
+            new_available=new_available,
+        )
+
+    def get_learning_stats(self, db: Session) -> dict:
+        """Aggregate learning statistics for irregular verbs."""
+        stats = self._repo.get_learning_stats(db)
+        by_level = self._repo.count_by_level(db)
+        by_state_raw = self._repo.count_by_state(db)
+
+        by_state = {
+            _STATE_NAMES.get(state_int, f"Unknown({state_int})"): count
+            for state_int, count in by_state_raw.items()
+        }
+
+        return {
+            "total_irregular_verbs": stats["total_irregular_verbs"],
+            "by_level": by_level,
+            "by_state": by_state,
+        }

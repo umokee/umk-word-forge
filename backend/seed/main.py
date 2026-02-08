@@ -5,13 +5,113 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from backend.core.database import Base, engine, SessionLocal
-from backend.modules.words.models import Word, WordContext
+from backend.modules.words.models import (
+    Word,
+    WordContext,
+    PhrasalVerb,
+    PhrasalVerbContext,
+    IrregularVerb,
+    IrregularVerbContext,
+)
 from backend.seed.sources.frequency import get_top_words
 from backend.seed.sources.ipa import load_ipa_dict
 from backend.seed.sources.translations import get_translations
 from backend.seed.sources.pos_tagger import get_pos_tags
 from backend.seed.sources.sentences import get_sentences_for_word
 from backend.seed.sources.cefr import assign_cefr_levels
+from backend.seed.sources.phrasal_verbs import get_phrasal_verbs
+from backend.seed.sources.irregular_verbs import get_irregular_verbs
+
+
+def seed_phrasal_verbs(db, force: bool = False):
+    """Seed phrasal verbs into database."""
+    print("\nSeeding phrasal verbs...")
+
+    if force:
+        db.query(PhrasalVerbContext).delete()
+        db.query(PhrasalVerb).delete()
+        db.commit()
+
+    existing = db.query(PhrasalVerb).count()
+    if existing > 0 and not force:
+        print(f"  Already have {existing} phrasal verbs, skipping...")
+        return
+
+    phrasal_verbs = get_phrasal_verbs()
+    count = 0
+
+    for rank, pv_data in enumerate(phrasal_verbs, 1):
+        existing_pv = db.query(PhrasalVerb).filter(
+            PhrasalVerb.phrase == pv_data["phrase"]
+        ).first()
+        if existing_pv:
+            continue
+
+        pv = PhrasalVerb(
+            phrase=pv_data["phrase"],
+            base_verb=pv_data["base_verb"],
+            particle=pv_data["particle"],
+            translations=pv_data["translations"],
+            definitions=pv_data["definitions"],
+            frequency_rank=rank,
+            cefr_level="B1",  # Default level
+            is_separable=pv_data.get("is_separable", True),
+        )
+        db.add(pv)
+        count += 1
+
+        if count % 50 == 0:
+            print(f"  {count} phrasal verbs added...")
+            db.commit()
+
+    db.commit()
+    total = db.query(PhrasalVerb).count()
+    print(f"  Done! {total} phrasal verbs in database.")
+
+
+def seed_irregular_verbs(db, force: bool = False):
+    """Seed irregular verbs into database."""
+    print("\nSeeding irregular verbs...")
+
+    if force:
+        db.query(IrregularVerbContext).delete()
+        db.query(IrregularVerb).delete()
+        db.commit()
+
+    existing = db.query(IrregularVerb).count()
+    if existing > 0 and not force:
+        print(f"  Already have {existing} irregular verbs, skipping...")
+        return
+
+    irregular_verbs = get_irregular_verbs()
+    count = 0
+
+    for rank, iv_data in enumerate(irregular_verbs, 1):
+        existing_iv = db.query(IrregularVerb).filter(
+            IrregularVerb.base_form == iv_data["base"]
+        ).first()
+        if existing_iv:
+            continue
+
+        iv = IrregularVerb(
+            base_form=iv_data["base"],
+            past_simple=iv_data["past"],
+            past_participle=iv_data["participle"],
+            translations=iv_data["translations"],
+            verb_pattern=iv_data.get("pattern", "ABC"),
+            frequency_rank=rank,
+            cefr_level="A2",  # Most common irregular verbs are A2
+        )
+        db.add(iv)
+        count += 1
+
+        if count % 50 == 0:
+            print(f"  {count} irregular verbs added...")
+            db.commit()
+
+    db.commit()
+    total = db.query(IrregularVerb).count()
+    print(f"  Done! {total} irregular verbs in database.")
 
 
 def seed_database(word_count: int = 10000, skip_ai: bool = True, force: bool = False):
@@ -23,6 +123,10 @@ def seed_database(word_count: int = 10000, skip_ai: bool = True, force: bool = F
     try:
         if force:
             print("Clearing existing data...")
+            db.query(IrregularVerbContext).delete()
+            db.query(IrregularVerb).delete()
+            db.query(PhrasalVerbContext).delete()
+            db.query(PhrasalVerb).delete()
             db.query(WordContext).delete()
             db.query(Word).delete()
             db.commit()
@@ -96,6 +200,19 @@ def seed_database(word_count: int = 10000, skip_ai: bool = True, force: bool = F
         total = db.query(Word).count()
         contexts = db.query(WordContext).count()
         print(f"\nDone! {total} words and {contexts} contexts in database.")
+
+        # Seed phrasal verbs and irregular verbs
+        seed_phrasal_verbs(db, force=force)
+        seed_irregular_verbs(db, force=force)
+
+        # Print final summary
+        print("\n" + "=" * 50)
+        print("Database seeding complete!")
+        print(f"  Words: {db.query(Word).count()}")
+        print(f"  Word Contexts: {db.query(WordContext).count()}")
+        print(f"  Phrasal Verbs: {db.query(PhrasalVerb).count()}")
+        print(f"  Irregular Verbs: {db.query(IrregularVerb).count()}")
+        print("=" * 50)
 
     finally:
         db.close()

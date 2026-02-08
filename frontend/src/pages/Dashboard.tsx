@@ -8,6 +8,8 @@ import {
   Target,
   Zap,
   Clock,
+  Layers,
+  ArrowLeftRight,
 } from 'lucide-react';
 import {
   BarChart,
@@ -200,25 +202,49 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Action buttons */}
-      <div className="mt-6 flex gap-3">
-        <Button
-          size="lg"
-          onClick={() => navigate('/train?duration=5')}
-          className="gap-2"
-        >
-          <Zap size={18} />
-          Quick Training (5 min)
-        </Button>
-        <Button
-          variant="secondary"
-          size="lg"
-          onClick={() => navigate('/train?duration=15')}
-          className="gap-2"
-        >
-          <Clock size={18} />
-          Full Training (15 min)
-        </Button>
+      {/* Training mode buttons */}
+      <div className="mt-6">
+        <h2 className="mb-3 text-sm font-medium text-[#888888]">Start Training</h2>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <button
+            onClick={() => navigate('/train/words')}
+            className="group flex items-center gap-4 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] p-4 text-left transition-all hover:border-[#00ff88]/50 hover:bg-[#1e1e1e]"
+          >
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm bg-[#00ff88]/10 text-[#00ff88]">
+              <BookOpen size={24} />
+            </div>
+            <div>
+              <p className="font-medium text-[#e0e0e0]">Words</p>
+              <p className="text-xs text-[#666666]">10,000+ vocabulary</p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/train/phrasal')}
+            className="group flex items-center gap-4 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] p-4 text-left transition-all hover:border-[#00aaff]/50 hover:bg-[#1e1e1e]"
+          >
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm bg-[#00aaff]/10 text-[#00aaff]">
+              <Layers size={24} />
+            </div>
+            <div>
+              <p className="font-medium text-[#e0e0e0]">Phrasal Verbs</p>
+              <p className="text-xs text-[#666666]">300+ expressions</p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/train/irregular')}
+            className="group flex items-center gap-4 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] p-4 text-left transition-all hover:border-[#ff6b6b]/50 hover:bg-[#1e1e1e]"
+          >
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm bg-[#ff6b6b]/10 text-[#ff6b6b]">
+              <ArrowLeftRight size={24} />
+            </div>
+            <div>
+              <p className="font-medium text-[#e0e0e0]">Irregular Verbs</p>
+              <p className="text-xs text-[#666666]">200+ verbs</p>
+            </div>
+          </button>
+        </div>
       </div>
 
       {/* Charts row */}

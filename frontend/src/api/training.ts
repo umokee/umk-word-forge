@@ -5,6 +5,12 @@ import type {
   AnswerSubmit,
   AnswerResult,
   SessionSummary,
+  PhrasalVerbSessionResult,
+  PhrasalVerbAnswerSubmit,
+  PhrasalVerbAnswerResult,
+  IrregularVerbSessionResult,
+  IrregularVerbAnswerSubmit,
+  IrregularVerbAnswerResult,
 } from '../types';
 
 export interface CreateSessionParams {
@@ -38,4 +44,56 @@ export function endSession(sessionId: number): Promise<SessionSummary> {
   return apiFetch<SessionSummary>(`/training/session/${sessionId}/end`, {
     method: 'POST',
   });
+}
+
+// ---------------------------------------------------------------------------
+// Phrasal Verb Training API
+// ---------------------------------------------------------------------------
+
+export function createPhrasalSession(
+  params: CreateSessionParams = {},
+): Promise<PhrasalVerbSessionResult> {
+  return apiFetch<PhrasalVerbSessionResult>('/training/session/phrasal', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+}
+
+export function submitPhrasalAnswer(
+  sessionId: number,
+  answer: PhrasalVerbAnswerSubmit,
+): Promise<PhrasalVerbAnswerResult> {
+  return apiFetch<PhrasalVerbAnswerResult>(
+    `/training/session/${sessionId}/phrasal/answer`,
+    {
+      method: 'POST',
+      body: JSON.stringify(answer),
+    },
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Irregular Verb Training API
+// ---------------------------------------------------------------------------
+
+export function createIrregularSession(
+  params: CreateSessionParams = {},
+): Promise<IrregularVerbSessionResult> {
+  return apiFetch<IrregularVerbSessionResult>('/training/session/irregular', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+}
+
+export function submitIrregularAnswer(
+  sessionId: number,
+  answer: IrregularVerbAnswerSubmit,
+): Promise<IrregularVerbAnswerResult> {
+  return apiFetch<IrregularVerbAnswerResult>(
+    `/training/session/${sessionId}/irregular/answer`,
+    {
+      method: 'POST',
+      body: JSON.stringify(answer),
+    },
+  );
 }

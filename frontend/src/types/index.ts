@@ -323,3 +323,227 @@ export interface FreeProductionFeedback {
   feedback_ru: string;
   corrected?: string;
 }
+
+// ---------------------------------------------------------------------------
+// Phrasal Verbs
+// ---------------------------------------------------------------------------
+
+export interface PhrasalVerbDefinition {
+  en: string;
+  ru: string;
+}
+
+export interface PhrasalVerbFull {
+  id: number;
+  phrase: string;
+  base_verb: string;
+  particle: string;
+  translations: string[];
+  definitions: PhrasalVerbDefinition[];
+  frequency_rank: number | null;
+  cefr_level: string | null;
+  is_separable: boolean;
+}
+
+export interface PhrasalVerbContext {
+  id: number;
+  phrasal_verb_id: number;
+  sentence_en: string;
+  sentence_ru: string | null;
+  source: string | null;
+  difficulty: number;
+}
+
+export interface UserPhrasalVerb {
+  id: number;
+  phrasal_verb_id: number;
+  mastery_level: number;
+  consecutive_correct: number;
+  consecutive_wrong: number;
+  fsrs_stability: number;
+  fsrs_difficulty: number;
+  fsrs_state: number;
+  fsrs_reps: number;
+  fsrs_lapses: number;
+  next_review_at: string | null;
+  created_at: string | null;
+}
+
+export interface UserPhrasalVerbWithPhrasal extends UserPhrasalVerb {
+  phrase: string;
+  base_verb: string;
+  particle: string;
+  translations: string[];
+  definitions: PhrasalVerbDefinition[];
+  is_separable: boolean;
+}
+
+export interface PhrasalVerbExercise {
+  phrasal_verb_id: number;
+  exercise_type: number;
+  phrase: string;
+  base_verb: string;
+  particle: string;
+  translations: string[];
+  definitions: PhrasalVerbDefinition[];
+  is_separable: boolean;
+  options?: string[] | null;
+  sentence_en?: string | null;
+  sentence_ru?: string | null;
+  hint?: string | null;
+  particle_options?: string[] | null;
+  separability_options?: string[] | null;
+}
+
+export interface PhrasalVerbAnswerSubmit {
+  phrasal_verb_id: number;
+  answer: string;
+  response_time_ms: number;
+  exercise_type: number;
+}
+
+export interface PhrasalVerbAnswerResult {
+  correct: boolean;
+  rating: number;
+  correct_answer: string;
+  feedback: string | null;
+  mastery_level: number;
+  level_changed: boolean;
+}
+
+export interface PhrasalVerbSessionResult {
+  session_id: number;
+  exercises: PhrasalVerbExercise[];
+  total_items: number;
+}
+
+export interface DuePhrasalVerbs {
+  overdue: UserPhrasalVerbWithPhrasal[];
+  learning: UserPhrasalVerbWithPhrasal[];
+  new_available: number;
+}
+
+// ---------------------------------------------------------------------------
+// Irregular Verbs
+// ---------------------------------------------------------------------------
+
+export interface IrregularVerbFull {
+  id: number;
+  base_form: string;
+  past_simple: string;
+  past_participle: string;
+  translations: string[];
+  transcription_base: string | null;
+  transcription_past: string | null;
+  transcription_participle: string | null;
+  frequency_rank: number | null;
+  cefr_level: string | null;
+  verb_pattern: string;
+}
+
+export interface IrregularVerbContext {
+  id: number;
+  irregular_verb_id: number;
+  sentence_en: string;
+  sentence_ru: string | null;
+  verb_form_used: string | null;
+  source: string | null;
+  difficulty: number;
+}
+
+export interface UserIrregularVerb {
+  id: number;
+  irregular_verb_id: number;
+  mastery_level: number;
+  consecutive_correct: number;
+  consecutive_wrong: number;
+  fsrs_stability: number;
+  fsrs_difficulty: number;
+  fsrs_state: number;
+  fsrs_reps: number;
+  fsrs_lapses: number;
+  next_review_at: string | null;
+  created_at: string | null;
+}
+
+export interface UserIrregularVerbWithIrregular extends UserIrregularVerb {
+  base_form: string;
+  past_simple: string;
+  past_participle: string;
+  translations: string[];
+  verb_pattern: string;
+  transcription_base: string | null;
+  transcription_past: string | null;
+  transcription_participle: string | null;
+}
+
+export interface IrregularVerbExercise {
+  irregular_verb_id: number;
+  exercise_type: number;
+  base_form: string;
+  past_simple: string;
+  past_participle: string;
+  translations: string[];
+  verb_pattern: string;
+  transcription_base: string | null;
+  transcription_past: string | null;
+  transcription_participle: string | null;
+  options?: string[] | null;
+  sentence_en?: string | null;
+  sentence_ru?: string | null;
+  hint?: string | null;
+  target_form?: string | null;
+  given_form?: string | null;
+}
+
+export interface IrregularVerbAnswerSubmit {
+  irregular_verb_id: number;
+  answer: string;
+  response_time_ms: number;
+  exercise_type: number;
+}
+
+export interface IrregularVerbAnswerResult {
+  correct: boolean;
+  rating: number;
+  correct_answer: string;
+  feedback: string | null;
+  mastery_level: number;
+  level_changed: boolean;
+}
+
+export interface IrregularVerbSessionResult {
+  session_id: number;
+  exercises: IrregularVerbExercise[];
+  total_items: number;
+}
+
+export interface DueIrregularVerbs {
+  overdue: UserIrregularVerbWithIrregular[];
+  learning: UserIrregularVerbWithIrregular[];
+  new_available: number;
+}
+
+// ---------------------------------------------------------------------------
+// Training Mode Selection
+// ---------------------------------------------------------------------------
+
+export type TrainingMode = 'words' | 'phrasal' | 'irregular';
+
+export interface TrainingSelectorProps {
+  onModeSelect: (mode: TrainingMode) => void;
+}
+
+// ---------------------------------------------------------------------------
+// Exercise Component Props for Phrasal and Irregular
+// ---------------------------------------------------------------------------
+
+export interface PhrasalVerbExerciseProps {
+  exercise: PhrasalVerbExercise;
+  onAnswer: (answer: string, timeMs: number) => void;
+}
+
+export interface IrregularVerbExerciseProps {
+  exercise: IrregularVerbExercise;
+  onAnswer: (answer: string, timeMs: number) => void;
+}

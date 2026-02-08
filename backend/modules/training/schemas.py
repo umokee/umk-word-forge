@@ -104,5 +104,97 @@ class SessionSummary(BaseModel):
     level_ups: int
 
 
+# ---------------------------------------------------------------------------
+# Phrasal Verb Exercise DTOs
+# ---------------------------------------------------------------------------
+
+class PhrasalVerbExerciseResponse(BaseModel):
+    """Exercise response for phrasal verb training."""
+
+    phrasal_verb_id: int
+    exercise_type: int = Field(..., ge=1, le=6)
+    phrase: str  # "look up"
+    base_verb: str  # "look"
+    particle: str  # "up"
+    translations: list[str] = []
+    definitions: list[dict] = []  # [{"en": "...", "ru": "..."}]
+    is_separable: bool = True
+    options: list[str] | None = None
+    sentence_en: str | None = None
+    sentence_ru: str | None = None
+    hint: str | None = None
+    particle_options: list[str] | None = None  # For particle fill exercises
+    separability_options: list[str] | None = None  # For separability exercises
+
+
+class PhrasalVerbAnswerSubmit(BaseModel):
+    phrasal_verb_id: int
+    answer: str
+    response_time_ms: int = Field(..., ge=0)
+    exercise_type: int = Field(default=2, ge=1, le=6)
+
+
+class PhrasalVerbAnswerResult(BaseModel):
+    correct: bool
+    rating: int = Field(..., ge=0, le=5)
+    correct_answer: str
+    feedback: str | None = None
+    mastery_level: int
+    level_changed: bool
+
+
+class PhrasalVerbSessionResponse(BaseModel):
+    session_id: int
+    exercises: list[PhrasalVerbExerciseResponse]
+    total_items: int
+
+
+# ---------------------------------------------------------------------------
+# Irregular Verb Exercise DTOs
+# ---------------------------------------------------------------------------
+
+class IrregularVerbExerciseResponse(BaseModel):
+    """Exercise response for irregular verb training."""
+
+    irregular_verb_id: int
+    exercise_type: int = Field(..., ge=1, le=6)
+    base_form: str  # "go"
+    past_simple: str  # "went"
+    past_participle: str  # "gone"
+    translations: list[str] = []
+    verb_pattern: str = ""  # "ABC", "ABB", "AAA", "ABA"
+    transcription_base: str | None = None
+    transcription_past: str | None = None
+    transcription_participle: str | None = None
+    options: list[str] | None = None
+    sentence_en: str | None = None
+    sentence_ru: str | None = None
+    hint: str | None = None
+    target_form: str | None = None  # Which form to guess: "base", "past", "participle"
+    given_form: str | None = None  # The form shown to user
+
+
+class IrregularVerbAnswerSubmit(BaseModel):
+    irregular_verb_id: int
+    answer: str
+    response_time_ms: int = Field(..., ge=0)
+    exercise_type: int = Field(default=2, ge=1, le=6)
+
+
+class IrregularVerbAnswerResult(BaseModel):
+    correct: bool
+    rating: int = Field(..., ge=0, le=5)
+    correct_answer: str
+    feedback: str | None = None
+    mastery_level: int
+    level_changed: bool
+
+
+class IrregularVerbSessionResponse(BaseModel):
+    session_id: int
+    exercises: list[IrregularVerbExerciseResponse]
+    total_items: int
+
+
 # Rebuild models to resolve forward references
 StartSessionResponse.model_rebuild()
