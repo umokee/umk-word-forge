@@ -301,6 +301,8 @@ in
       recommendedOptimisation = lib.mkDefault true;
       recommendedProxySettings = lib.mkDefault true;
 
+      proxyTimeout = "60s";
+
       virtualHosts."${domain}" = {
         listen = [
           { addr = "0.0.0.0"; port = publicPort; }
