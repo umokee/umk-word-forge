@@ -29,8 +29,10 @@ def seed_database(word_count: int = 5000, skip_ai: bool = True, force: bool = Fa
 
         existing = db.query(Word).count()
         if existing > 0 and not force:
-            print(f"Database already has {existing} words. Use --force to overwrite.")
-            return
+            print(f"Database has {existing} words. Adding new words up to {word_count}...")
+            if existing >= word_count:
+                print(f"Already have {existing} words, nothing to add.")
+                return
 
         print("Step 1: Getting frequency list...")
         words = get_top_words(word_count)
