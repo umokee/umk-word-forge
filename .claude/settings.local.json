@@ -10,7 +10,10 @@
       "Bash(npx vite build:*)",
       "Bash(npx eslint:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(python backend/migrate_settings.py:*)",
+      "Bash(nix-shell:*)",
+      "Bash(npm run typecheck:*)"
     ]
   }
 }
