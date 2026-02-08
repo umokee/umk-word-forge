@@ -54,9 +54,9 @@ function ChartTooltip({
 
 const HEATMAP_COLORS = [
   'bg-[#1e1e1e]', // level 0
-  '#bg-[#00ff88]900/50', // level 1
-  '#bg-[#00ff88]700/60', // level 2
-  'bg-[#00ff88]/70', // level 3
+  'bg-[#0a3d2a]', // level 1
+  'bg-[#0d5c3d]', // level 2
+  'bg-[#00aa55]', // level 3
   'bg-[#00ff88]', // level 4
 ];
 
