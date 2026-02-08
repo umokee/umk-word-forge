@@ -48,6 +48,35 @@ def _generate_exercise(
     # Determine exercise type based on mastery level (1-7)
     exercise_type = max(1, min(mastery_level, 7))
 
+    # Parse JSON fields if present
+    import json
+
+    verb_forms = None
+    collocations = None
+    phrasal_verbs = None
+    usage_notes = None
+
+    if word.verb_forms:
+        try:
+            verb_forms = json.loads(word.verb_forms) if isinstance(word.verb_forms, str) else word.verb_forms
+        except:
+            pass
+    if word.collocations:
+        try:
+            collocations = json.loads(word.collocations) if isinstance(word.collocations, str) else word.collocations
+        except:
+            pass
+    if word.phrasal_verbs:
+        try:
+            phrasal_verbs = json.loads(word.phrasal_verbs) if isinstance(word.phrasal_verbs, str) else word.phrasal_verbs
+        except:
+            pass
+    if word.usage_notes:
+        try:
+            usage_notes = json.loads(word.usage_notes) if isinstance(word.usage_notes, str) else word.usage_notes
+        except:
+            pass
+
     # Base exercise data
     exercise = ExerciseResponse(
         word_id=word_id,
@@ -58,6 +87,10 @@ def _generate_exercise(
         part_of_speech=word.part_of_speech,
         sentence_en=context.sentence_en if context else None,
         sentence_ru=context.sentence_ru if context else None,
+        verb_forms=verb_forms,
+        collocations=collocations,
+        phrasal_verbs=phrasal_verbs,
+        usage_notes=usage_notes,
     )
 
     # Add options for recognition/context exercises (types 2, 4)

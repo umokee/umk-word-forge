@@ -26,6 +26,19 @@ interface ExerciseProps {
 function ExerciseIntroduction({ exercise, onAnswer, disabled }: ExerciseProps) {
   const { speak } = useTTS();
 
+  // Helper to format verb forms
+  const formatVerbForms = () => {
+    if (!exercise.verb_forms) return null;
+    const forms = exercise.verb_forms;
+    const parts: string[] = [];
+    if (forms.past) parts.push(forms.past);
+    if (forms.past_participle) parts.push(forms.past_participle);
+    if (forms.present_participle) parts.push(forms.present_participle);
+    return parts.length > 0 ? parts.join(' / ') : null;
+  };
+
+  const verbFormsStr = formatVerbForms();
+
   return (
     <div className="flex flex-col items-center gap-6 text-center">
       <p className="text-sm text-[#888888]">Новое слово</p>
@@ -49,6 +62,14 @@ function ExerciseIntroduction({ exercise, onAnswer, disabled }: ExerciseProps) {
       {exercise.part_of_speech && (
         <Badge variant="accent">{exercise.part_of_speech}</Badge>
       )}
+
+      {/* Verb forms (3 forms) */}
+      {verbFormsStr && (
+        <p className="font-mono text-sm text-[#00aa55]">
+          {exercise.english} — {verbFormsStr}
+        </p>
+      )}
+
       <div className="space-y-1">
         {exercise.translations.map((t, i) => (
           <p key={i} className="text-lg text-[#e0e0e0]">
@@ -56,6 +77,8 @@ function ExerciseIntroduction({ exercise, onAnswer, disabled }: ExerciseProps) {
           </p>
         ))}
       </div>
+
+      {/* Context sentence */}
       {exercise.sentence_en && (
         <div className="mt-2 max-w-md rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3">
           <p className="text-sm text-[#e0e0e0]">{exercise.sentence_en}</p>
@@ -66,6 +89,54 @@ function ExerciseIntroduction({ exercise, onAnswer, disabled }: ExerciseProps) {
           )}
         </div>
       )}
+
+      {/* Collocations */}
+      {exercise.collocations && exercise.collocations.length > 0 && (
+        <div className="mt-2 w-full max-w-md">
+          <p className="mb-2 text-xs text-[#666666]">Словосочетания:</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {exercise.collocations.slice(0, 4).map((col, i) => (
+              <span
+                key={i}
+                className="rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-2.5 py-1 text-xs"
+              >
+                <span className="text-[#e0e0e0]">{col.en}</span>
+                <span className="mx-1 text-[#3a3a3a]">—</span>
+                <span className="text-[#888888]">{col.ru}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Phrasal verbs */}
+      {exercise.phrasal_verbs && exercise.phrasal_verbs.length > 0 && (
+        <div className="mt-2 w-full max-w-md">
+          <p className="mb-2 text-xs text-[#666666]">Фразовые глаголы:</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {exercise.phrasal_verbs.slice(0, 3).map((pv, i) => (
+              <span
+                key={i}
+                className="rounded-sm border border-[#00ff88]/20 bg-[#00ff88]/5 px-2.5 py-1 text-xs"
+              >
+                <span className="font-medium text-[#00ff88]">{pv.phrase}</span>
+                <span className="mx-1 text-[#3a3a3a]">→</span>
+                <span className="text-[#888888]">{pv.meaning_ru}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Usage notes */}
+      {exercise.usage_notes && exercise.usage_notes.length > 0 && (
+        <div className="mt-2 w-full max-w-md rounded-sm border border-[#2a2a2a]/50 bg-[#1a1a1a] px-3 py-2">
+          <p className="text-xs text-[#666666]">
+            {exercise.usage_notes.slice(0, 2).join(' • ')}
+          </p>
+        </div>
+      )}
+
       <Button
         size="lg"
         onClick={() => onAnswer('seen')}

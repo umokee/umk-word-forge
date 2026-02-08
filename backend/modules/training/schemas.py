@@ -63,6 +63,12 @@ class ExerciseResponse(BaseModel):
     hint: str | None = None
     reverse: bool = False
 
+    # Linguistic enrichment data
+    verb_forms: dict | None = None
+    collocations: list[dict] | None = None
+    phrasal_verbs: list[dict] | None = None
+    usage_notes: list[str] | None = None
+
 
 # ---------------------------------------------------------------------------
 # Answer DTOs

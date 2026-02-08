@@ -129,6 +129,24 @@ export interface SessionProgress {
   wrong: number;
 }
 
+export interface VerbForms {
+  past?: string;
+  past_participle?: string;
+  present_participle?: string;
+  third_person?: string;
+}
+
+export interface Collocation {
+  en: string;
+  ru: string;
+}
+
+export interface PhrasalVerb {
+  phrase: string;
+  meaning_en?: string;
+  meaning_ru: string;
+}
+
 export interface Exercise {
   word_id: number;
   exercise_type: number;
@@ -142,6 +160,12 @@ export interface Exercise {
   scrambled_words?: string[] | null;
   hint?: string | null;
   reverse?: boolean;
+
+  // Linguistic enrichment
+  verb_forms?: VerbForms | null;
+  collocations?: Collocation[] | null;
+  phrasal_verbs?: PhrasalVerb[] | null;
+  usage_notes?: string[] | null;
 }
 
 export interface AnswerSubmit {
