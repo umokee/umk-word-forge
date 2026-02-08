@@ -420,12 +420,19 @@ function FeedbackOverlay({
     true,
   );
 
+  // Softer feedback messages for neuroticism consideration
+  const feedbackMessage = result.correct
+    ? 'Отлично'
+    : result.rating >= 3
+      ? 'Почти! Небольшая опечатка'
+      : 'Не совсем';
+
   return (
     <div className="animate-fade-in mt-8 flex flex-col items-center gap-4">
       <div
         className={cn(
           'flex items-center gap-2 text-lg font-bold',
-          result.correct ? 'text-[#00ff88]' : 'text-red-400',
+          result.correct ? 'text-[#00ff88]' : 'text-[#f59e0b]',
         )}
       >
         {result.correct ? (
@@ -433,30 +440,24 @@ function FeedbackOverlay({
         ) : (
           <XCircle size={24} />
         )}
-        {result.correct ? 'Correct!' : 'Incorrect'}
+        {feedbackMessage}
       </div>
 
       {!result.correct && (
         <p className="text-sm text-[#888888]">
-          Correct answer:{' '}
+          Правильный ответ:{' '}
           <span className="font-mono text-[#e0e0e0]">
             {result.correct_answer}
           </span>
         </p>
       )}
 
-      {result.feedback && (
-        <p className="max-w-md text-center text-sm text-[#666666]">
-          {result.feedback}
-        </p>
-      )}
-
       {result.level_changed && (
-        <Badge variant="success">Level up! Mastery: {result.mastery_level}</Badge>
+        <Badge variant="success">Уровень +1! Mastery: {result.mastery_level}</Badge>
       )}
 
       <Button onClick={onContinue} className="mt-2 gap-2">
-        Continue <ArrowRight size={16} />
+        Далее <ArrowRight size={16} />
       </Button>
     </div>
   );
@@ -476,40 +477,46 @@ function SessionSummaryOverlay({
   return (
     <div className="flex min-h-screen items-center justify-center">
       <Card className="w-full max-w-md animate-slide-up text-center">
-        <h2 className="text-2xl font-bold text-[#e0e0e0]">Session Complete</h2>
-        <p className="mt-1 text-sm text-[#888888]">Great work!</p>
+        <h2 className="text-2xl font-bold text-[#e0e0e0]">Сессия завершена</h2>
+        <p className="mt-1 text-sm text-[#888888]">
+          {summary.accuracy >= 80
+            ? 'Отличный результат'
+            : summary.accuracy >= 60
+              ? 'Хороший прогресс'
+              : 'Практика делает мастера'}
+        </p>
 
         <div className="mt-6 grid grid-cols-2 gap-4">
           <div className="rounded-sm bg-[#1e1e1e] px-3 py-3">
-            <p className="text-xs text-[#888888]">Words</p>
+            <p className="text-xs text-[#888888]">Слов</p>
             <p className="text-xl font-bold text-[#e0e0e0]">
               {summary.total_words}
             </p>
           </div>
           <div className="rounded-sm bg-[#1e1e1e] px-3 py-3">
-            <p className="text-xs text-[#888888]">Accuracy</p>
+            <p className="text-xs text-[#888888]">Точность</p>
             <p className="text-xl font-bold text-[#e0e0e0]">
               {formatPercent(summary.accuracy / 100)}
             </p>
           </div>
           <div className="rounded-sm bg-[#1e1e1e] px-3 py-3">
-            <p className="text-xs text-[#888888]">Correct</p>
+            <p className="text-xs text-[#888888]">Правильно</p>
             <p className="text-xl font-bold text-[#00ff88]">
               {summary.correct}
             </p>
           </div>
           <div className="rounded-sm bg-[#1e1e1e] px-3 py-3">
-            <p className="text-xs text-[#888888]">Wrong</p>
-            <p className="text-xl font-bold text-red-400">{summary.wrong}</p>
+            <p className="text-xs text-[#888888]">Ошибок</p>
+            <p className="text-xl font-bold text-[#f59e0b]">{summary.wrong}</p>
           </div>
           <div className="rounded-sm bg-[#1e1e1e] px-3 py-3">
-            <p className="text-xs text-[#888888]">New Learned</p>
+            <p className="text-xs text-[#888888]">Новых слов</p>
             <p className="text-xl font-bold text-[#00ff88]">
               {summary.new_words_learned}
             </p>
           </div>
           <div className="rounded-sm bg-[#1e1e1e] px-3 py-3">
-            <p className="text-xs text-[#888888]">Time</p>
+            <p className="text-xs text-[#888888]">Время</p>
             <p className="text-xl font-bold text-[#e0e0e0]">
               {formatDuration(summary.time_spent_seconds)}
             </p>
@@ -519,13 +526,13 @@ function SessionSummaryOverlay({
         {summary.level_ups > 0 && (
           <div className="mt-4">
             <Badge variant="success">
-              {summary.level_ups} level-up{summary.level_ups > 1 ? 's' : ''}!
+              +{summary.level_ups} уровн{summary.level_ups > 1 ? 'ей' : 'ь'}
             </Badge>
           </div>
         )}
 
         <Button size="lg" onClick={onClose} className="mt-6 w-full">
-          Back to Dashboard
+          На главную
         </Button>
       </Card>
     </div>
@@ -606,6 +613,34 @@ export default function Train() {
           exercise_type: exercise.exercise_type,
         });
         addAnswer(result);
+
+        // Level 1 (Introduction) - auto-advance without feedback overlay
+        if (exercise.exercise_type === 1) {
+          setSubmitting(false);
+          // Small delay before advancing
+          setTimeout(() => {
+            if (currentIndex >= exercises.length - 1) {
+              endSession(sessionId).then(setSummary).catch(() => {
+                const answers = useTrainingStore.getState().answers;
+                const correct = answers.filter((a) => a.correct).length;
+                setSummary({
+                  total_words: exercises.length,
+                  correct,
+                  wrong: exercises.length - correct,
+                  accuracy: exercises.length > 0 ? (correct / exercises.length) * 100 : 0,
+                  new_words_learned: 0,
+                  time_spent_seconds: 0,
+                  level_ups: 0,
+                });
+              });
+            } else {
+              nextExercise();
+              answerStartTime.current = Date.now();
+            }
+          }, 300);
+          return;
+        }
+
         setFeedbackResult(result);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to submit answer');
@@ -613,7 +648,7 @@ export default function Train() {
         setSubmitting(false);
       }
     },
-    [sessionId, currentIndex, exercises, submitting, addAnswer],
+    [sessionId, currentIndex, exercises, submitting, addAnswer, nextExercise],
   );
 
   // -- Advance to next exercise or finish -----------------------------------
