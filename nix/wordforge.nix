@@ -207,7 +207,7 @@ in
         TimeoutStartSec = "infinity";
 
         EnvironmentFile = config.sops.templates."wordforge-env".path;
-        ExecStart = "${projectPath}/venv/bin/uvicorn backend.main:app --host ${backendHost} --port ${toString backendPort}";
+        ExecStart = "${projectPath}/venv/bin/uvicorn backend.main:app --host ${backendHost} --port ${toString backendPort} --proxy-headers --forwarded-allow-ips='${backendHost}'";
         Restart = "always";
         RestartSec = "10";
 
@@ -338,6 +338,13 @@ in
             limit_req zone=wf_api_limit burst=20 nodelay;
             limit_conn wf_conn_limit 15;
 
+            # Explicit HTTP/1.1 — required in the location block because
+            # proxy_set_header here discards ALL inherited proxy_set_header
+            # from the http block (recommendedProxySettings).  Without this
+            # the Connection hop-by-hop header leaks to the backend, causing
+            # keep-alive desync and "Invalid HTTP request received" in uvicorn.
+            proxy_http_version 1.1;
+            proxy_set_header Connection "";
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

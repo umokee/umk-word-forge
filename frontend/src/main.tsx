@@ -26,8 +26,12 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       .catch((e: Error) => {
         if (e.message === 'AUTH_REQUIRED') {
           setState('need_key');
+        } else if (/^HTTP 50[234]$/.test(e.message)) {
+          // Gateway error — backend is unreachable behind the reverse proxy
+          setConnectError(e.message);
+          setState('error');
         } else if (e.message.startsWith('HTTP ')) {
-          // Server responded but with an unexpected error — try open access
+          // Other HTTP status — server is up, try open access
           setState('ok');
         } else {
           // Network error or backend unreachable

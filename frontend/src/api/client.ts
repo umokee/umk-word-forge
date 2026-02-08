@@ -13,8 +13,12 @@ export async function apiFetch<T>(
   options?: RequestInit,
 ): Promise<T> {
   const apiKey = getApiKey();
+  const method = (options?.method || 'GET').toUpperCase();
+  const hasBody = options?.body !== undefined;
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    ...(hasBody || method === 'POST' || method === 'PUT' || method === 'PATCH'
+      ? { 'Content-Type': 'application/json' }
+      : {}),
     ...(apiKey ? { 'X-API-Key': apiKey } : {}),
     ...(options?.headers as Record<string, string> || {}),
   };
@@ -29,7 +33,7 @@ export async function apiFetch<T>(
   }
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({ detail: 'Unknown error' }));
+    const error = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
     throw new Error(error.detail || `HTTP ${res.status}`);
   }
 
