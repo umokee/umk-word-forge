@@ -141,7 +141,6 @@ export default function Settings() {
 
   // API key fields (not part of backend settings schema, stored locally)
   const [geminiKey, setGeminiKey] = useState('');
-  const [groqKey, setGroqKey] = useState('');
 
   // Sync form with fetched settings
   useEffect(() => {
@@ -153,7 +152,6 @@ export default function Settings() {
   // Load API keys from localStorage
   useEffect(() => {
     setGeminiKey(localStorage.getItem('gemini_api_key') ?? '');
-    setGroqKey(localStorage.getItem('groq_api_key') ?? '');
   }, []);
 
   // Mutation for saving settings
@@ -169,7 +167,6 @@ export default function Settings() {
   const handleSave = async () => {
     // Save API keys to localStorage
     localStorage.setItem('gemini_api_key', geminiKey);
-    localStorage.setItem('groq_api_key', groqKey);
 
     // Save backend settings
     await mutation.mutateAsync({
@@ -358,14 +355,6 @@ export default function Settings() {
               onChange={(e) => setGeminiKey(e.target.value)}
               placeholder="Enter your Gemini API key..."
               hint="Used for AI-powered sentence checking and context generation"
-            />
-            <Input
-              label="Groq API Key"
-              type="password"
-              value={groqKey}
-              onChange={(e) => setGroqKey(e.target.value)}
-              placeholder="Enter your Groq API key..."
-              hint="Fallback AI provider for sentence checking"
             />
           </div>
         </Card>

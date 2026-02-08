@@ -14,7 +14,6 @@ GEMINI_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
     "gemini-2.0-flash:generateContent?key={api_key}"
 )
-GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 
 class AIService:
@@ -23,10 +22,6 @@ class AIService:
         if settings.GEMINI_API_KEY:
             self.providers.append(
                 {"name": "gemini", "call": self._call_gemini}
-            )
-        if settings.GROQ_API_KEY:
-            self.providers.append(
-                {"name": "groq", "call": self._call_groq}
             )
 
     async def check_sentence(
@@ -60,7 +55,7 @@ class AIService:
         """Try each provider in order until one succeeds."""
         if not self.providers:
             raise AllProvidersFailedError(
-                "No AI providers configured. Set GEMINI_API_KEY or GROQ_API_KEY."
+                "No AI providers configured. Set GEMINI_API_KEY."
             )
 
         errors = []
@@ -109,29 +104,6 @@ class AIService:
 
         data = response.json()
         text = data["candidates"][0]["content"]["parts"][0]["text"]
-        return text.strip()
-
-    async def _call_groq(self, prompt: str) -> str:
-        """Call Groq API (OpenAI-compatible)."""
-        headers = {
-            "Authorization": f"Bearer {settings.GROQ_API_KEY}",
-            "Content-Type": "application/json",
-        }
-        payload = {
-            "model": "llama-3.1-70b-versatile",
-            "messages": [
-                {"role": "user", "content": prompt}
-            ],
-            "temperature": 0.3,
-            "max_tokens": 1024,
-        }
-
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(GROQ_URL, headers=headers, json=payload)
-            response.raise_for_status()
-
-        data = response.json()
-        text = data["choices"][0]["message"]["content"]
         return text.strip()
 
     @staticmethod
