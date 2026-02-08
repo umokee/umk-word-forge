@@ -232,10 +232,17 @@ in
 
         # Seed database on first run (if empty)
         if [ ! -f ${dataDir}/wordforge.db ]; then
-          echo "First run detected — seeding database with 500 words..."
+          echo "First run detected — seeding database with 5000 words..."
           cd ${projectPath}
-          DATABASE_URL=sqlite:///${dataDir}/wordforge.db ${projectPath}/venv/bin/python -m backend.seed --count 500
+          DATABASE_URL=sqlite:///${dataDir}/wordforge.db ${projectPath}/venv/bin/python -m backend.seed --count 5000
           echo "Seed completed"
+        fi
+
+        # Run migrations for existing databases
+        if [ -f ${dataDir}/wordforge.db ]; then
+          echo "Running database migrations..."
+          cd ${projectPath}
+          ${projectPath}/venv/bin/python migrate_db.py || echo "Migration completed or not needed"
         fi
       '';
     };
