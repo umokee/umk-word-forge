@@ -234,7 +234,7 @@ in
         if [ ! -f ${dataDir}/wordforge.db ]; then
           echo "First run detected — seeding database with 5000 words..."
           cd ${projectPath}
-          DATABASE_URL=sqlite:///${dataDir}/wordforge.db ${projectPath}/venv/bin/python -m backend.seed --count 5000
+          DATABASE_URL=sqlite:///${dataDir}/wordforge.db ${projectPath}/venv/bin/python -m backend.seed --count 10000
           echo "Seed completed"
         fi
 
@@ -312,7 +312,10 @@ in
 
       virtualHosts."${domain}" = {
         listen = [
-          { addr = "0.0.0.0"; port = publicPort; }
+          {
+            addr = "0.0.0.0";
+            port = publicPort;
+          }
         ];
 
         # IP whitelist через allow/deny
