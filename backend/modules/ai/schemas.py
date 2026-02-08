@@ -24,3 +24,11 @@ class AIContextRequest(BaseModel):
 
 class AIContextResult(BaseModel):
     contexts: list[dict]
+
+
+class AIEnrichResult(BaseModel):
+    verb_forms: dict | None = None
+    collocations: list[dict] = []
+    phrasal_verbs: list[dict] | None = None
+    usage_notes: list[str] = []
+    common_mistakes: list[dict] = []

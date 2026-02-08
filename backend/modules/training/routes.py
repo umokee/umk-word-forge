@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from backend.core.database import get_db
 
 from . import service
-from .context_service import ensure_ai_contexts
+from .context_service import ensure_ai_contexts, enrich_word_data
 from .schemas import (
     AnswerResult,
     AnswerSubmit,
@@ -27,9 +27,10 @@ async def start_session(
     duration = body.duration_minutes if body else 15
     result = service.create_session(db, duration_minutes=duration)
 
-    # Generate AI contexts for words that don't have them (async)
+    # Generate AI contexts and enrich words (async)
     for exercise in result.exercises:
         await ensure_ai_contexts(db, exercise.word_id)
+        await enrich_word_data(db, exercise.word_id)
 
     # Refresh exercises with new contexts
     result = service.refresh_session_contexts(db, result)

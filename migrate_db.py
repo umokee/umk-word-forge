@@ -59,6 +59,15 @@ def migrate():
         ('ai_difficulty_context', 'TEXT', "'simple'"),
     ]
 
+    # Words table - linguistic enrichment
+    words_columns = [
+        ('verb_forms', 'TEXT', 'NULL'),
+        ('collocations', 'TEXT', 'NULL'),
+        ('phrasal_verbs', 'TEXT', 'NULL'),
+        ('usage_notes', 'TEXT', 'NULL'),
+        ('ai_enriched', 'INTEGER', '0'),
+    ]
+
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
@@ -81,8 +90,28 @@ def migrate():
             print(f"  - Exists: {col_name}")
 
     conn.commit()
+    print(f"Settings table: added {added} new columns.")
+
+    # Migrate words table
+    cursor.execute("PRAGMA table_info(words)")
+    existing_words = {row[1] for row in cursor.fetchall()}
+    print(f"Words table columns: {sorted(existing_words)}")
+
+    added_words = 0
+    for col_name, col_type, default in words_columns:
+        if col_name not in existing_words:
+            try:
+                sql = f"ALTER TABLE words ADD COLUMN {col_name} {col_type} DEFAULT {default}"
+                cursor.execute(sql)
+                print(f"  + Added to words: {col_name}")
+                added_words += 1
+            except Exception as e:
+                print(f"  ! Error adding {col_name} to words: {e}")
+
+    conn.commit()
     conn.close()
-    print(f"\nMigration complete. Added {added} new columns.")
+    print(f"Words table: added {added_words} new columns.")
+    print("\nMigration complete.")
 
 
 if __name__ == "__main__":

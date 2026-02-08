@@ -163,100 +163,83 @@ def create_session(db: DBSession, duration_minutes: int | None = None) -> StartS
     duration = duration_minutes or settings.session_duration_minutes or 15
     max_reviews = settings.max_reviews_per_session or 50
     daily_new = settings.daily_new_words or 10
+    new_position = settings.new_words_position or "end"  # start/middle/end
 
     session = repository.create_session(db)
 
-    # Calculate target exercise count based on settings
-    target_exercises = min(max_reviews, max(10, duration * 4))  # ~15 sec per exercise
-    target_new_words = min(daily_new, target_exercises // 3)
-
     # Get words for the session
     now = datetime.now(timezone.utc)
-    exercises: list[ExerciseResponse] = []
+    review_exercises: list[ExerciseResponse] = []
+    new_exercises: list[ExerciseResponse] = []
 
-    # 1. Get overdue words (need review)
+    # 1. Get overdue words (need review) - limited by max_reviews
     overdue_words = (
         db.query(UserWord)
         .filter(UserWord.next_review_at <= now)
         .order_by(UserWord.next_review_at.asc())
-        .limit(target_exercises)
+        .limit(max_reviews)
         .all()
     )
 
     # 2. Get words in learning/relearning state
+    learning_word_ids = {uw.word_id for uw in overdue_words}
     learning_words = (
         db.query(UserWord)
         .filter(UserWord.fsrs_state.in_([1, 3]))
-        .limit(target_exercises // 2)
+        .filter(UserWord.word_id.notin_(learning_word_ids))
+        .limit(max_reviews // 2)
         .all()
     )
 
-    # 3. Get new words (not yet in learning) - from most frequent
+    # 3. Get new words (not yet in learning) - strictly limited by daily_new
     existing_ids = db.query(UserWord.word_id).subquery()
     new_words = (
         db.query(Word)
         .filter(Word.id.notin_(existing_ids))
         .order_by(Word.frequency_rank.asc().nullslast())
-        .limit(target_new_words)
+        .limit(daily_new)  # Strict limit on new words
         .all()
     )
 
-    # Combine and generate exercises
-    words_reviewed = 0
-    words_new = 0
-
-    # Add overdue exercises
+    # Generate review exercises
     for uw in overdue_words:
-        if len(exercises) >= target_exercises:
+        if len(review_exercises) >= max_reviews:
             break
         try:
             ex = _generate_exercise(db, uw.word_id, uw.mastery_level)
-            exercises.append(ex)
-            words_reviewed += 1
+            review_exercises.append(ex)
         except Exception:
             continue
 
-    # Add learning exercises
     for uw in learning_words:
-        if len(exercises) >= target_exercises:
-            break
-        if uw.word_id not in [e.word_id for e in exercises]:
-            try:
-                ex = _generate_exercise(db, uw.word_id, uw.mastery_level)
-                exercises.append(ex)
-                words_reviewed += 1
-            except Exception:
-                continue
-
-    # Add new words (level 1 - introduction)
-    for word in new_words:
-        if len(exercises) >= target_exercises:
+        if len(review_exercises) >= max_reviews:
             break
         try:
-            ex = _generate_exercise(db, word.id, 1)
-            exercises.append(ex)
-            words_new += 1
+            ex = _generate_exercise(db, uw.word_id, uw.mastery_level)
+            review_exercises.append(ex)
         except Exception:
             continue
 
-    # If still not enough exercises, get more words from dictionary
-    if len(exercises) < target_exercises:
-        remaining = target_exercises - len(exercises)
-        used_word_ids = {e.word_id for e in exercises}
-        more_words = (
-            db.query(Word)
-            .filter(Word.id.notin_(used_word_ids))
-            .order_by(Word.frequency_rank.asc().nullslast())
-            .limit(remaining)
-            .all()
-        )
-        for word in more_words:
-            try:
-                ex = _generate_exercise(db, word.id, 1)
-                exercises.append(ex)
-                words_new += 1
-            except Exception:
-                continue
+    # Generate new word exercises (Introduction - level 1)
+    for word in new_words:
+        try:
+            ex = _generate_exercise(db, word.id, 1)
+            new_exercises.append(ex)
+        except Exception:
+            continue
+
+    # Combine based on new_words_position setting
+    exercises: list[ExerciseResponse] = []
+    if new_position == "start":
+        exercises = new_exercises + review_exercises
+    elif new_position == "middle":
+        mid = len(review_exercises) // 2
+        exercises = review_exercises[:mid] + new_exercises + review_exercises[mid:]
+    else:  # "end"
+        exercises = review_exercises + new_exercises
+
+    words_reviewed = len(review_exercises)
+    words_new = len(new_exercises)
 
     # Update session with word counts
     repository.update_session(db, session.id, {
@@ -320,28 +303,36 @@ def record_answer(
     session_id: int,
     answer: AnswerSubmit,
 ) -> AnswerResult:
-    """Evaluate a learner's answer and update the session counters.
+    """Evaluate a learner's answer and update mastery level via FSRS."""
+    from backend.modules.words.models import Word
+    from backend.modules.learning.service import LearningService
+    from backend.modules.learning.schemas import ReviewCreate
+    from backend.modules.learning.repository import LearningRepository
 
-    The correct answer is determined from the word record. Mastery-level
-    promotion logic is simplified here; the learning module can hook into
-    events for full SRS processing.
-    """
     session = repository.get_session(db, session_id)
     if session.ended_at is not None:
         raise SessionAlreadyEndedError(session_id)
 
-    # Fetch the word to obtain the expected answer
-    from backend.modules.words.models import Word
-
+    # Fetch the word
     word = db.query(Word).filter(Word.id == answer.word_id).first()
     correct_answer = word.translations[0] if word and word.translations else ""
 
-    # Level 1 (Introduction) is always correct - user just acknowledges seeing the word
+    # Evaluate answer
     if answer.exercise_type == 1:
+        # Introduction - always correct, user acknowledges seeing word
         is_correct = True
-        rating = 4  # Good rating for introduction
+        fsrs_rating = 4  # Easy - just saw the word
     else:
-        is_correct, rating = _evaluate_answer(answer.answer, correct_answer)
+        is_correct, score = _evaluate_answer(answer.answer, correct_answer)
+        # Map score to FSRS rating: 1=Again, 2=Hard, 3=Good, 4=Easy
+        if not is_correct:
+            fsrs_rating = 1  # Again
+        elif score >= 5:
+            fsrs_rating = 4  # Easy - exact match
+        elif score >= 3:
+            fsrs_rating = 3  # Good - minor typo
+        else:
+            fsrs_rating = 2  # Hard
 
     # Update session counters
     update_data: dict = {"total_count": session.total_count + 1}
@@ -349,21 +340,35 @@ def record_answer(
         update_data["correct_count"] = session.correct_count + 1
     repository.update_session(db, session_id, update_data)
 
-    # Placeholder mastery tracking -- real SRS lives in the learning module
-    mastery_level = 1
-    level_changed = False
+    # Initialize or update the word in learning system
+    learning_service = LearningService()
+    learning_repo = LearningRepository()
+
+    user_word = learning_repo.get_user_word(db, answer.word_id)
+    if not user_word:
+        # First time seeing this word - initialize it
+        user_word = learning_service.initialize_word(db, answer.word_id)
+
+    # Record the review to update mastery and FSRS
+    review = ReviewCreate(
+        exercise_type=answer.exercise_type,
+        rating=fsrs_rating,
+        response_time_ms=answer.response_time_ms,
+        correct=is_correct,
+    )
+    mastery_result = learning_service.record_review(db, answer.word_id, review)
 
     feedback = None
     if not is_correct:
-        feedback = f"The correct answer is: {correct_answer}"
+        feedback = f"Правильный ответ: {correct_answer}"
 
     return AnswerResult(
         correct=is_correct,
-        rating=rating,
+        rating=fsrs_rating,
         correct_answer=correct_answer,
         feedback=feedback,
-        mastery_level=mastery_level,
-        level_changed=level_changed,
+        mastery_level=mastery_result.new_level,
+        level_changed=mastery_result.level_changed,
     )
 
 

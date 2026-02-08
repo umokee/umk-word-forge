@@ -4,8 +4,8 @@ import logging
 import httpx
 
 from backend.core.config import settings
-from .schemas import AICheckResult, AIContextResult
-from .prompts import check_sentence_prompt, generate_contexts_prompt
+from .schemas import AICheckResult, AIContextResult, AIEnrichResult
+from .prompts import check_sentence_prompt, generate_contexts_prompt, enrich_word_prompt
 from .exceptions import AllProvidersFailedError, AIRateLimitError
 
 logger = logging.getLogger(__name__)
@@ -57,6 +57,25 @@ class AIService:
             contexts = [data]
 
         return AIContextResult(contexts=contexts)
+
+    async def enrich_word(
+        self,
+        word: str,
+        part_of_speech: str,
+        translations: list[str] | None = None,
+    ) -> AIEnrichResult:
+        """Generate comprehensive linguistic data for a word."""
+        prompt = enrich_word_prompt(word, part_of_speech, translations or [])
+        raw = await self._call_with_fallback(prompt)
+        data = self._parse_json(raw)
+
+        return AIEnrichResult(
+            verb_forms=data.get("verb_forms"),
+            collocations=data.get("collocations", []),
+            phrasal_verbs=data.get("phrasal_verbs"),
+            usage_notes=data.get("usage_notes", []),
+            common_mistakes=data.get("common_mistakes", []),
+        )
 
     async def _call_with_fallback(self, prompt: str) -> str:
         """Try each provider in order until one succeeds."""

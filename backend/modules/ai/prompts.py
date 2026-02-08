@@ -58,3 +58,39 @@ Example format:
 ]
 
 Return ONLY the JSON array, no markdown or extra text."""
+
+
+def enrich_word_prompt(word: str, part_of_speech: str, translations: list[str]) -> str:
+    """Build a prompt to generate comprehensive linguistic data for a word."""
+    translation_hint = ", ".join(translations[:3]) if translations else ""
+
+    return f"""You are a linguistic expert creating data for an English vocabulary learning app for Russian speakers.
+
+Word: "{word}"
+Part of speech: {part_of_speech}
+Russian translation: {translation_hint}
+
+Generate comprehensive linguistic information about this word.
+
+Return a JSON object with these fields (use null for inapplicable fields):
+
+1. "verb_forms" (object or null): For verbs only
+   - "past": past tense ("went")
+   - "past_participle": past participle ("gone")
+   - "present_participle": present participle ("going")
+   - "third_person": third person singular ("goes")
+
+2. "collocations" (array): 3-5 common collocations/word combinations
+   Each: {{"en": "make a decision", "ru": "принять решение"}}
+
+3. "phrasal_verbs" (array or null): For words that form phrasal verbs
+   Each: {{"phrase": "look for", "meaning_en": "to search", "meaning_ru": "искать"}}
+
+4. "usage_notes" (array): 2-4 important usage notes in Russian
+   Examples: "часто используется с артиклем 'the'", "исчисляемое существительное", "неправильный глагол"
+
+5. "common_mistakes" (array): 1-2 common mistakes Russian speakers make
+   Each: {{"wrong": "I want go", "correct": "I want to go", "explanation_ru": "После want нужен инфинитив с to"}}
+
+Focus on practical information that helps Russian speakers use the word correctly.
+Return ONLY the JSON object, no markdown or extra text."""
