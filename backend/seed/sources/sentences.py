@@ -84,25 +84,13 @@ BASIC_SENTENCES: dict[str, list[dict]] = {
 
 
 def _generate_template_sentences(word: str, pos: str = "noun") -> list[dict]:
-    """Generate simple template-based sentences for words without examples."""
-    templates = {
-        "noun": [
-            {"en": f"This is a {word}.", "ru": f"Это {word}.", "difficulty": 1},
-            {"en": f"I see the {word}.", "ru": f"Я вижу {word}.", "difficulty": 1},
-        ],
-        "verb": [
-            {"en": f"I {word} every day.", "ru": f"Я делаю это каждый день.", "difficulty": 1},
-            {"en": f"They {word} together.", "ru": f"Они делают это вместе.", "difficulty": 1},
-        ],
-        "adj": [
-            {"en": f"It is very {word}.", "ru": f"Это очень {word}.", "difficulty": 1},
-            {"en": f"This looks {word}.", "ru": f"Это выглядит {word}.", "difficulty": 1},
-        ],
-        "adv": [
-            {"en": f"She speaks {word}.", "ru": f"Она говорит {word}.", "difficulty": 1},
-        ],
-    }
-    return templates.get(pos, templates["noun"])
+    """Generate template sentences - DISABLED, AI should generate contexts instead.
+
+    Returns empty list so words without predefined contexts will get AI-generated ones.
+    """
+    # Don't generate awful templates like "This is a to."
+    # AI will generate proper contexts when the word is shown
+    return []
 
 
 def get_sentences_for_word(word: str, pos: str = "noun") -> list[dict]:

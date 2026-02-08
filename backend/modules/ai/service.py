@@ -17,12 +17,18 @@ GEMINI_URL = (
 
 
 class AIService:
-    def __init__(self):
+    def __init__(self, api_key: str | None = None):
+        self._api_key = api_key or settings.GEMINI_API_KEY
         self.providers = []
-        if settings.GEMINI_API_KEY:
+        if self._api_key:
             self.providers.append(
                 {"name": "gemini", "call": self._call_gemini}
             )
+
+    def configure(self, api_key: str) -> None:
+        """Dynamically configure the API key (e.g., from database settings)."""
+        self._api_key = api_key
+        self.providers = [{"name": "gemini", "call": self._call_gemini}]
 
     async def check_sentence(
         self, word: str, translation: str, sentence: str
@@ -111,7 +117,7 @@ class AIService:
 
     async def _call_gemini(self, prompt: str) -> str:
         """Call Google Gemini API."""
-        url = GEMINI_URL.format(api_key=settings.GEMINI_API_KEY)
+        url = GEMINI_URL.format(api_key=self._api_key)
         payload = {
             "contents": [
                 {
