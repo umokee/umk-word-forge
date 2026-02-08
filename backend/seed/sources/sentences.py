@@ -83,8 +83,35 @@ BASIC_SENTENCES: dict[str, list[dict]] = {
 }
 
 
-def get_sentences_for_word(word: str) -> list[dict]:
-    return BASIC_SENTENCES.get(word.lower(), [])
+def _generate_template_sentences(word: str, pos: str = "noun") -> list[dict]:
+    """Generate simple template-based sentences for words without examples."""
+    templates = {
+        "noun": [
+            {"en": f"This is a {word}.", "ru": f"Это {word}.", "difficulty": 1},
+            {"en": f"I see the {word}.", "ru": f"Я вижу {word}.", "difficulty": 1},
+        ],
+        "verb": [
+            {"en": f"I {word} every day.", "ru": f"Я делаю это каждый день.", "difficulty": 1},
+            {"en": f"They {word} together.", "ru": f"Они делают это вместе.", "difficulty": 1},
+        ],
+        "adj": [
+            {"en": f"It is very {word}.", "ru": f"Это очень {word}.", "difficulty": 1},
+            {"en": f"This looks {word}.", "ru": f"Это выглядит {word}.", "difficulty": 1},
+        ],
+        "adv": [
+            {"en": f"She speaks {word}.", "ru": f"Она говорит {word}.", "difficulty": 1},
+        ],
+    }
+    return templates.get(pos, templates["noun"])
+
+
+def get_sentences_for_word(word: str, pos: str = "noun") -> list[dict]:
+    """Get example sentences for a word, with fallback to templates."""
+    sentences = BASIC_SENTENCES.get(word.lower(), [])
+    if not sentences:
+        # Generate template sentences if no predefined ones
+        sentences = _generate_template_sentences(word, pos)
+    return sentences
 
 
 def get_all_sentences() -> dict[str, list[dict]]:

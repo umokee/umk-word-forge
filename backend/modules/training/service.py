@@ -132,6 +132,11 @@ def create_session(db: DBSession, duration_minutes: int = 15) -> StartSessionRes
 
     session = repository.create_session(db)
 
+    # Calculate target exercise count based on duration
+    # ~10 seconds per exercise on average
+    target_exercises = max(10, duration_minutes * 6)
+    target_new_words = min(10, max(3, duration_minutes // 3))  # 3-10 new words
+
     # Get words for the session
     now = datetime.now(timezone.utc)
     exercises: list[ExerciseResponse] = []
@@ -141,7 +146,7 @@ def create_session(db: DBSession, duration_minutes: int = 15) -> StartSessionRes
         db.query(UserWord)
         .filter(UserWord.next_review_at <= now)
         .order_by(UserWord.next_review_at.asc())
-        .limit(15)
+        .limit(target_exercises)
         .all()
     )
 
@@ -149,17 +154,17 @@ def create_session(db: DBSession, duration_minutes: int = 15) -> StartSessionRes
     learning_words = (
         db.query(UserWord)
         .filter(UserWord.fsrs_state.in_([1, 3]))
-        .limit(10)
+        .limit(target_exercises // 2)
         .all()
     )
 
-    # 3. Get new words (not yet in learning)
+    # 3. Get new words (not yet in learning) - from most frequent
     existing_ids = db.query(UserWord.word_id).subquery()
     new_words = (
         db.query(Word)
         .filter(Word.id.notin_(existing_ids))
         .order_by(Word.frequency_rank.asc().nullslast())
-        .limit(5)
+        .limit(target_new_words)
         .all()
     )
 
@@ -169,6 +174,8 @@ def create_session(db: DBSession, duration_minutes: int = 15) -> StartSessionRes
 
     # Add overdue exercises
     for uw in overdue_words:
+        if len(exercises) >= target_exercises:
+            break
         try:
             ex = _generate_exercise(db, uw.word_id, uw.mastery_level)
             exercises.append(ex)
@@ -178,6 +185,8 @@ def create_session(db: DBSession, duration_minutes: int = 15) -> StartSessionRes
 
     # Add learning exercises
     for uw in learning_words:
+        if len(exercises) >= target_exercises:
+            break
         if uw.word_id not in [e.word_id for e in exercises]:
             try:
                 ex = _generate_exercise(db, uw.word_id, uw.mastery_level)
@@ -188,6 +197,8 @@ def create_session(db: DBSession, duration_minutes: int = 15) -> StartSessionRes
 
     # Add new words (level 1 - introduction)
     for word in new_words:
+        if len(exercises) >= target_exercises:
+            break
         try:
             ex = _generate_exercise(db, word.id, 1)
             exercises.append(ex)
@@ -195,15 +206,18 @@ def create_session(db: DBSession, duration_minutes: int = 15) -> StartSessionRes
         except Exception:
             continue
 
-    # If no exercises available, get random words from dictionary
-    if not exercises:
-        random_words = (
+    # If still not enough exercises, get more words from dictionary
+    if len(exercises) < target_exercises:
+        remaining = target_exercises - len(exercises)
+        used_word_ids = {e.word_id for e in exercises}
+        more_words = (
             db.query(Word)
+            .filter(Word.id.notin_(used_word_ids))
             .order_by(Word.frequency_rank.asc().nullslast())
-            .limit(10)
+            .limit(remaining)
             .all()
         )
-        for word in random_words:
+        for word in more_words:
             try:
                 ex = _generate_exercise(db, word.id, 1)
                 exercises.append(ex)

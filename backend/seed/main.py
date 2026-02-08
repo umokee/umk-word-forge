@@ -14,7 +14,7 @@ from backend.seed.sources.sentences import get_sentences_for_word
 from backend.seed.sources.cefr import assign_cefr_levels
 
 
-def seed_database(word_count: int = 500, skip_ai: bool = True, force: bool = False):
+def seed_database(word_count: int = 5000, skip_ai: bool = True, force: bool = False):
     print(f"Starting seed with {word_count} words...")
 
     Base.metadata.create_all(bind=engine)
@@ -73,7 +73,8 @@ def seed_database(word_count: int = 500, skip_ai: bool = True, force: bool = Fal
             db.add(word)
             db.flush()
 
-            sentences = get_sentences_for_word(word_text)
+            word_pos = pos_tags.get(word_text, "noun")
+            sentences = get_sentences_for_word(word_text, word_pos)
             for sent in sentences:
                 ctx = WordContext(
                     word_id=word.id,
@@ -100,7 +101,7 @@ def seed_database(word_count: int = 500, skip_ai: bool = True, force: bool = Fal
 
 def main():
     parser = argparse.ArgumentParser(description="Seed WordForge database")
-    parser.add_argument("--count", type=int, default=500, help="Number of words")
+    parser.add_argument("--count", type=int, default=5000, help="Number of words (default: 5000)")
     parser.add_argument("--skip-ai", action="store_true", help="Skip AI translations")
     parser.add_argument("--force", action="store_true", help="Overwrite existing data")
     args = parser.parse_args()
