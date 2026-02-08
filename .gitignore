@@ -28,6 +28,7 @@ frontend/data/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
+*.tsbuildinfo
 
 # Seed cache
 backend/seed/data/*.txt
