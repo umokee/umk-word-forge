@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Save, Loader2, CheckCircle, LogOut } from 'lucide-react';
-import { setApiKey } from '@/api/client';
+import { Save, Loader2, CheckCircle } from 'lucide-react';
 
 import { Header } from '@/components/layout/Header';
 import { Card } from '@/components/ui/Card';
@@ -304,42 +303,6 @@ export default function Settings() {
             checked={form.keyboard_shortcuts}
             onChange={(val) => updateForm('keyboard_shortcuts', val)}
           />
-        </Card>
-
-        {/* Security section */}
-        <Card>
-          <h2 className="mb-5 text-base font-semibold text-[#E8E8EC]">
-            Security
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-[#E8E8EC]">
-                App API Key
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="password"
-                  value={localStorage.getItem('wordforge_api_key') || ''}
-                  readOnly
-                  className="flex-1 rounded-sm border border-[#2A2A30] bg-[#1C1C20] px-3 py-2 font-mono text-sm text-[#5C5C66] outline-none"
-                  placeholder="Not set"
-                />
-                <button
-                  onClick={() => {
-                    setApiKey('');
-                    window.location.reload();
-                  }}
-                  className="flex items-center gap-1.5 rounded-sm border border-[#2A2A30] bg-transparent px-3 py-2 text-sm text-[#8B8B96] hover:border-red-500/50 hover:text-red-400 transition-colors"
-                >
-                  <LogOut size={14} />
-                  Logout
-                </button>
-              </div>
-              <p className="mt-1 text-xs text-[#5C5C66]">
-                API key is set at login. Use logout to clear and re-enter.
-              </p>
-            </div>
-          </div>
         </Card>
 
         {/* API keys section */}

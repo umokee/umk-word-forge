@@ -7,17 +7,18 @@
 }:
 
 let
-  enable = helpers.hasIn "services" "wordforge";
+  enable = helpers.hasIn "services" "task-manager";
 
-  gitRepo = "https://github.com/umokee/umk-word-forge.git";
-  gitBranch = "main";
+  gitRepo = "https://github.com/umokee/jsddsfjlskdfj.git";
+  gitBranch = "claude/review-refactored-code-EWP7N";
+  # gitBranch = "claude/fix-missed-day-roll-8h2dP";
 
-  domain = "words.umkcloud.xyz";
-  publicPort = 8889;
-  backendPort = 8001;
+  domain = "tasks.umkcloud.xyz";
+  publicPort = 8888;
+  backendPort = 8000;
   backendHost = "127.0.0.1";
 
-  # IP whitelist — добавь свои IP (домашний, мобильный оператор, и т.д.)
+  # IP whitelist — добавь свои IP (должны совпадать с word-forge.nix)
   allowedIPs = [
     "127.0.0.1" # VPN (sing-box) трафик — не убирать!
     "178.218.98.184"
@@ -25,14 +26,13 @@ let
     # "5.6.7.0/24"       # диапазон мобильного оператора
   ];
 
-  projectPath = "/var/lib/wordforge";
-  secretsDir = "/var/lib/wordforge-secrets";
-  logDir = "/var/log/wordforge";
-  dataDir = "${projectPath}/data";
+  projectPath = "/var/lib/task-manager";
+  secretsDir = "/var/lib/task-manager-secrets";
+  logDir = "/var/log/task-manager";
   frontendBuildDir = "${projectPath}/frontend/dist";
 
-  user = "wordforge";
-  group = "wordforge";
+  user = "task-manager";
+  group = "task-manager";
 
   nodeDeps = with pkgs; [
     nodejs
@@ -44,7 +44,7 @@ in
     users.users.${user} = {
       isSystemUser = true;
       group = group;
-      description = "WordForge service user";
+      description = "Task Manager service user";
       home = projectPath;
     };
     users.groups.${group} = { };
@@ -56,31 +56,23 @@ in
       "d ${projectPath} 0755 ${user} ${group} -"
       "d ${secretsDir} 0700 ${user} ${group} -"
       "d ${logDir} 0750 ${user} ${group} -"
-      "d ${dataDir} 0750 ${user} ${group} -"
       "f ${logDir}/app.log 0640 ${user} ${group} -"
     ];
 
-    # --- Secrets (sops-nix) ---
-    sops.secrets."word-forge/gemini-key" = {
+    sops.secrets."task-manager-api" = {
       owner = user;
     };
 
-    sops.templates."wordforge-env" = {
+    sops.templates."task-manager-env" = {
       content = ''
-        GEMINI_API_KEY=${config.sops.placeholder."word-forge/gemini-key"}
-        DATABASE_URL=sqlite:///${dataDir}/wordforge.db
-        CORS_ORIGINS=http://${domain}:${toString publicPort},http://127.0.0.1:${toString publicPort}
-        DEBUG=false
-        WORDFORGE_LOG_DIR=${logDir}
-        WORDFORGE_LOG_FILE=app.log
+        TASK_MANAGER_API_KEY=${config.sops.placeholder."task-manager-api"}
       '';
       owner = user;
       group = group;
     };
 
-    # --- Git sync ---
-    systemd.services.wordforge-git-sync = {
-      description = "Sync WordForge from Git";
+    systemd.services.task-manager-git-sync = {
+      description = "Sync Task Manager from Git";
       wantedBy = [ "multi-user.target" ];
       after = [
         "systemd-tmpfiles-setup.service"
@@ -125,11 +117,10 @@ in
       '';
     };
 
-    # --- Frontend build ---
-    systemd.services.wordforge-frontend-build = {
-      description = "Build WordForge Frontend";
-      after = [ "wordforge-git-sync.service" ];
-      requires = [ "wordforge-git-sync.service" ];
+    systemd.services.task-manager-frontend-build = {
+      description = "Build Task Manager Frontend";
+      after = [ "task-manager-git-sync.service" ];
+      requires = [ "task-manager-git-sync.service" ];
       wantedBy = [ "multi-user.target" ];
       path = nodeDeps ++ [
         pkgs.coreutils
@@ -165,22 +156,21 @@ in
       '';
     };
 
-    # --- Backend (uvicorn) ---
-    systemd.services.wordforge-backend = {
-      description = "WordForge API Backend";
+    systemd.services.task-manager-backend = {
+      description = "Task Manager API Backend";
       after = [
-        "wordforge-git-sync.service"
+        "task-manager-git-sync.service"
         "network-online.target"
       ];
       wants = [ "network-online.target" ];
       requires = [
-        "wordforge-git-sync.service"
+        "task-manager-git-sync.service"
       ];
       wantedBy = [ "multi-user.target" ];
 
       environment = {
-        WORDFORGE_LOG_DIR = logDir;
-        WORDFORGE_LOG_FILE = "app.log";
+        TASK_MANAGER_LOG_DIR = logDir;
+        TASK_MANAGER_LOG_FILE = "app.log";
         PYTHONPATH = projectPath;
       };
 
@@ -198,7 +188,7 @@ in
         WorkingDirectory = projectPath;
         TimeoutStartSec = "infinity";
 
-        EnvironmentFile = config.sops.templates."wordforge-env".path;
+        EnvironmentFile = config.sops.templates."task-manager-env".path;
         ExecStart = "${projectPath}/venv/bin/uvicorn backend.main:app --host ${backendHost} --port ${toString backendPort}";
         Restart = "always";
         RestartSec = "10";
@@ -210,39 +200,32 @@ in
         ReadWritePaths = [
           logDir
           projectPath
-          dataDir
         ];
 
         StandardOutput = "journal";
         StandardError = "journal";
-        SyslogIdentifier = "wordforge-backend";
+        SyslogIdentifier = "task-manager-backend";
       };
 
       preStart = ''
-        mkdir -p ${dataDir}
+        if [ ! -d ${projectPath} ]; then
+          echo "Error: ${projectPath} does not exist"
+          exit 1
+        fi
 
         if [ ! -d ${projectPath}/venv ]; then
           echo "Creating virtualenv..."
           ${pkgs.python312}/bin/python -m venv ${projectPath}/venv
         fi
 
-        echo "Installing Python dependencies..."
+        echo "Installing dependencies from requirements.txt..."
         ${projectPath}/venv/bin/pip install --upgrade pip
         ${projectPath}/venv/bin/pip install -r ${projectPath}/backend/requirements.txt
-
-        # Seed database on first run (if empty)
-        if [ ! -f ${dataDir}/wordforge.db ]; then
-          echo "First run detected — seeding database with 500 words..."
-          cd ${projectPath}
-          DATABASE_URL=sqlite:///${dataDir}/wordforge.db ${projectPath}/venv/bin/python -m backend.seed --count 500
-          echo "Seed completed"
-        fi
       '';
     };
 
-    # --- One-shot update service ---
-    systemd.services.wordforge-update = {
-      description = "Update WordForge";
+    systemd.services.task-manager-update = {
+      description = "Update Task Manager";
 
       path = [
         pkgs.coreutils
@@ -255,13 +238,13 @@ in
 
       script = ''
         set -e
-        echo "=== Updating WordForge ==="
+        echo "=== Updating Task Manager ==="
 
         echo "[1/7] Stopping backend..."
-        ${pkgs.systemd}/bin/systemctl stop wordforge-backend
+        ${pkgs.systemd}/bin/systemctl stop task-manager-backend
 
         echo "[2/7] Updating code from Git..."
-        ${pkgs.systemd}/bin/systemctl restart wordforge-git-sync
+        ${pkgs.systemd}/bin/systemctl restart task-manager-git-sync
         sleep 2
 
         echo "[3/7] Recreating Python environment..."
@@ -271,17 +254,17 @@ in
         fi
 
         echo "[4/7] Rebuilding frontend..."
-        ${pkgs.systemd}/bin/systemctl restart wordforge-frontend-build
+        ${pkgs.systemd}/bin/systemctl restart task-manager-frontend-build
         sleep 3
 
         echo "[5/7] Starting backend..."
-        ${pkgs.systemd}/bin/systemctl start wordforge-backend
+        ${pkgs.systemd}/bin/systemctl start task-manager-backend
         sleep 5
 
         echo "[6/7] Checking backend status..."
-        if ! ${pkgs.systemd}/bin/systemctl is-active --quiet wordforge-backend; then
+        if ! ${pkgs.systemd}/bin/systemctl is-active --quiet task-manager-backend; then
           echo "ERROR: Backend failed to start!"
-          ${pkgs.systemd}/bin/systemctl status wordforge-backend --no-pager || true
+          ${pkgs.systemd}/bin/systemctl status task-manager-backend --no-pager || true
           exit 1
         fi
 
@@ -301,9 +284,14 @@ in
       recommendedOptimisation = lib.mkDefault true;
       recommendedProxySettings = lib.mkDefault true;
 
+      proxyTimeout = "60s";
+
       # IP whitelist через geo модуль
       commonHttpConfig = ''
-        geo $wf_allowed {
+        proxy_headers_hash_max_size 1024;
+        proxy_headers_hash_bucket_size 128;
+
+        geo $tm_allowed {
           default 0;
           ${lib.concatMapStrings (ip: "${ip} 1;\n          ") allowedIPs}
         }
@@ -317,7 +305,7 @@ in
         locations."/api/" = {
           proxyPass = "http://${backendHost}:${toString backendPort}";
           extraConfig = ''
-            if ($wf_allowed = 0) { return 403; }
+            if ($tm_allowed = 0) { return 403; }
 
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
@@ -330,20 +318,19 @@ in
           root = frontendBuildDir;
           tryFiles = "$uri $uri/ /index.html";
           extraConfig = ''
-            if ($wf_allowed = 0) { return 403; }
+            if ($tm_allowed = 0) { return 403; }
           '';
         };
 
         locations."~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf)$" = {
           root = frontendBuildDir;
           extraConfig = ''
-            if ($wf_allowed = 0) { return 403; }
+            if ($tm_allowed = 0) { return 403; }
             add_header Cache-Control "public, max-age=31536000, immutable";
             access_log off;
           '';
         };
       };
     };
-
   };
 }

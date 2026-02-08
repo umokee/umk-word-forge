@@ -8,7 +8,6 @@ from fastapi.responses import JSONResponse
 from backend.core.config import settings
 from backend.core.database import Base, engine
 from backend.core.exceptions import AppException
-from backend.core.security import APIKeyMiddleware
 
 from backend.modules.words.routes import router as words_router
 from backend.modules.learning.routes import router as learning_router
@@ -41,7 +40,6 @@ app = FastAPI(
     version="2.0.0",
 )
 
-app.add_middleware(APIKeyMiddleware)
 _cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
@@ -83,10 +81,3 @@ app.include_router(settings_router)
 @app.get("/api/health")
 def health():
     return {"status": "ok", "version": "2.0.0"}
-
-
-@app.get("/api/auth/check")
-def auth_check():
-    """Protected endpoint — returns 200 only with a valid API key.
-    Used by the frontend AuthGate to decide whether to show the login screen."""
-    return {"authenticated": True}
