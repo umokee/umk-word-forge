@@ -31,6 +31,13 @@ class SessionResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class StartSessionResponse(BaseModel):
+    """Response for starting a new session with generated exercises."""
+    session_id: int
+    exercises: list["ExerciseResponse"]
+    total_words: int
+
+
 class SessionProgress(BaseModel):
     current_index: int
     total_words: int
@@ -88,3 +95,7 @@ class SessionSummary(BaseModel):
     new_words_learned: int
     time_spent_seconds: int
     level_ups: int
+
+
+# Rebuild models to resolve forward references
+StartSessionResponse.model_rebuild()

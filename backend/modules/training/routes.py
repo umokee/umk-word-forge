@@ -11,18 +11,20 @@ from .schemas import (
     SessionProgress,
     SessionResponse,
     SessionSummary,
+    StartSessionResponse,
 )
 
 router = APIRouter(prefix="/api/training", tags=["training"])
 
 
-@router.post("/session", response_model=SessionResponse, status_code=201)
+@router.post("/session", response_model=StartSessionResponse, status_code=201)
 def start_session(
     body: SessionCreate | None = None,
     db: Session = Depends(get_db),
-) -> SessionResponse:
-    """Start a new training session."""
-    return service.create_session(db)
+) -> StartSessionResponse:
+    """Start a new training session with exercises."""
+    duration = body.duration_minutes if body else 15
+    return service.create_session(db, duration_minutes=duration)
 
 
 @router.get("/session/{session_id}", response_model=SessionResponse)
