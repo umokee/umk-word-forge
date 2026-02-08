@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { X, CheckCircle, XCircle, ArrowRight, Loader2 } from 'lucide-react';
+import { X, CheckCircle, XCircle, ArrowRight, Loader2, Volume2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge';
 import { useTrainingStore } from '@/stores/trainingStore';
 import { createSession, submitAnswer, endSession } from '@/api/training';
 import { useKeyboard } from '@/hooks/useKeyboard';
+import { useTTS } from '@/hooks/useTTS';
 import { cn, formatDuration, formatPercent } from '@/lib/utils';
 import type { AnswerResult, Exercise, SessionSummary } from '@/types';
 
@@ -23,12 +24,23 @@ interface ExerciseProps {
 
 // Type 1 -- Introduction
 function ExerciseIntroduction({ exercise, onAnswer, disabled }: ExerciseProps) {
+  const { speak } = useTTS();
+
   return (
     <div className="flex flex-col items-center gap-6 text-center">
-      <p className="text-sm text-[#888888]">New word</p>
-      <h2 className="font-mono text-5xl font-bold text-[#e0e0e0]">
-        {exercise.english}
-      </h2>
+      <p className="text-sm text-[#888888]">Новое слово</p>
+      <div className="flex items-center gap-3">
+        <h2 className="font-mono text-5xl font-bold text-[#e0e0e0]">
+          {exercise.english}
+        </h2>
+        <button
+          onClick={() => speak(exercise.english)}
+          className="flex h-10 w-10 items-center justify-center rounded-sm text-[#888888] transition-colors hover:bg-[#1e1e1e] hover:text-[#00ff88]"
+          aria-label="Озвучить"
+        >
+          <Volume2 size={24} />
+        </button>
+      </div>
       {exercise.transcription && (
         <p className="font-mono text-lg text-[#666666]">
           {exercise.transcription}
@@ -60,7 +72,7 @@ function ExerciseIntroduction({ exercise, onAnswer, disabled }: ExerciseProps) {
         disabled={disabled}
         className="mt-4"
       >
-        Got it
+        Понял
       </Button>
     </div>
   );
@@ -68,12 +80,13 @@ function ExerciseIntroduction({ exercise, onAnswer, disabled }: ExerciseProps) {
 
 // Type 2 -- Recognition (multiple choice)
 function ExerciseRecognition({ exercise, onAnswer, disabled }: ExerciseProps) {
+  const { speak } = useTTS();
   const prompt = exercise.reverse
     ? exercise.translations[0] ?? ''
     : exercise.english;
   const label = exercise.reverse
-    ? 'Choose the correct English word'
-    : 'Choose the correct translation';
+    ? 'Выберите английское слово'
+    : 'Выберите перевод';
 
   useKeyboard(
     {
@@ -89,7 +102,17 @@ function ExerciseRecognition({ exercise, onAnswer, disabled }: ExerciseProps) {
   return (
     <div className="flex flex-col items-center gap-6 text-center">
       <p className="text-sm text-[#888888]">{label}</p>
-      <h2 className="font-mono text-4xl font-bold text-[#e0e0e0]">{prompt}</h2>
+      <div className="flex items-center gap-3">
+        <h2 className="font-mono text-4xl font-bold text-[#e0e0e0]">{prompt}</h2>
+        {!exercise.reverse && (
+          <button
+            onClick={() => speak(exercise.english)}
+            className="flex h-9 w-9 items-center justify-center rounded-sm text-[#888888] transition-colors hover:bg-[#1e1e1e] hover:text-[#00ff88]"
+          >
+            <Volume2 size={20} />
+          </button>
+        )}
+      </div>
       {!exercise.reverse && exercise.transcription && (
         <p className="font-mono text-base text-[#666666]">
           {exercise.transcription}
@@ -119,6 +142,7 @@ function ExerciseRecognition({ exercise, onAnswer, disabled }: ExerciseProps) {
 
 // Type 3 -- Recall (type answer)
 function ExerciseRecall({ exercise, onAnswer, disabled }: ExerciseProps) {
+  const { speak } = useTTS();
   const [input, setInput] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -134,10 +158,18 @@ function ExerciseRecall({ exercise, onAnswer, disabled }: ExerciseProps) {
 
   return (
     <div className="flex flex-col items-center gap-6 text-center">
-      <p className="text-sm text-[#888888]">Type the translation</p>
-      <h2 className="font-mono text-4xl font-bold text-[#e0e0e0]">
-        {exercise.english}
-      </h2>
+      <p className="text-sm text-[#888888]">Напишите перевод</p>
+      <div className="flex items-center gap-3">
+        <h2 className="font-mono text-4xl font-bold text-[#e0e0e0]">
+          {exercise.english}
+        </h2>
+        <button
+          onClick={() => speak(exercise.english)}
+          className="flex h-9 w-9 items-center justify-center rounded-sm text-[#888888] transition-colors hover:bg-[#1e1e1e] hover:text-[#00ff88]"
+        >
+          <Volume2 size={20} />
+        </button>
+      </div>
       {exercise.transcription && (
         <p className="font-mono text-base text-[#666666]">
           {exercise.transcription}
@@ -151,11 +183,11 @@ function ExerciseRecall({ exercise, onAnswer, disabled }: ExerciseProps) {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
           disabled={disabled}
-          placeholder="Your answer..."
+          placeholder="Ваш ответ..."
           className="flex-1 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3 text-sm text-[#e0e0e0] outline-none placeholder:text-[#666666] focus:border-[#00ff88]"
         />
         <Button onClick={handleSubmit} disabled={disabled || !input.trim()}>
-          Check
+          Проверить
         </Button>
       </div>
     </div>
@@ -164,6 +196,8 @@ function ExerciseRecall({ exercise, onAnswer, disabled }: ExerciseProps) {
 
 // Type 4 -- Context (gap fill with options)
 function ExerciseContext({ exercise, onAnswer, disabled }: ExerciseProps) {
+  const { speak } = useTTS();
+
   useKeyboard(
     {
       onOption: (index: number) => {
@@ -177,7 +211,7 @@ function ExerciseContext({ exercise, onAnswer, disabled }: ExerciseProps) {
 
   return (
     <div className="flex flex-col items-center gap-6 text-center">
-      <p className="text-sm text-[#888888]">Choose the correct translation in context</p>
+      <p className="text-sm text-[#888888]">Выберите перевод в контексте</p>
       {exercise.sentence_en && (
         <div className="max-w-lg rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-5 py-4">
           <p className="text-base text-[#e0e0e0]">{exercise.sentence_en}</p>
@@ -216,9 +250,6 @@ function ExerciseContext({ exercise, onAnswer, disabled }: ExerciseProps) {
 // Type 5 -- Sentence Builder
 function ExerciseSentenceBuilder({ exercise, onAnswer, disabled }: ExerciseProps) {
   const [selected, setSelected] = useState<string[]>([]);
-  const available = (exercise.scrambled_words ?? []).filter(
-    (_, i) => !selected.includes(String(i)),
-  );
 
   const addWord = (word: string, idx: number) => {
     if (disabled) return;
@@ -242,7 +273,7 @@ function ExerciseSentenceBuilder({ exercise, onAnswer, disabled }: ExerciseProps
 
   return (
     <div className="flex flex-col items-center gap-6 text-center">
-      <p className="text-sm text-[#888888]">Arrange the words to form a sentence</p>
+      <p className="text-sm text-[#888888]">Составьте предложение из слов</p>
       {exercise.sentence_ru && (
         <p className="text-base text-[#888888]">{exercise.sentence_ru}</p>
       )}
@@ -250,7 +281,7 @@ function ExerciseSentenceBuilder({ exercise, onAnswer, disabled }: ExerciseProps
       {/* Built sentence area */}
       <div className="flex min-h-[52px] w-full max-w-lg flex-wrap items-center gap-2 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3">
         {selected.length === 0 && (
-          <span className="text-sm text-[#666666]">Click words below to build the sentence...</span>
+          <span className="text-sm text-[#666666]">Нажимайте на слова ниже...</span>
         )}
         {selected.map((idx, selIdx) => (
           <button
@@ -289,7 +320,7 @@ function ExerciseSentenceBuilder({ exercise, onAnswer, disabled }: ExerciseProps
         onClick={handleSubmit}
         disabled={disabled || selected.length === 0}
       >
-        Check
+        Проверить
       </Button>
     </div>
   );
@@ -297,6 +328,7 @@ function ExerciseSentenceBuilder({ exercise, onAnswer, disabled }: ExerciseProps
 
 // Type 6 -- Free Production
 function ExerciseFreeProduction({ exercise, onAnswer, disabled }: ExerciseProps) {
+  const { speak } = useTTS();
   const [input, setInput] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -312,10 +344,18 @@ function ExerciseFreeProduction({ exercise, onAnswer, disabled }: ExerciseProps)
 
   return (
     <div className="flex flex-col items-center gap-6 text-center">
-      <p className="text-sm text-[#888888]">Write a sentence using this word</p>
-      <h2 className="font-mono text-4xl font-bold text-[#e0e0e0]">
-        {exercise.english}
-      </h2>
+      <p className="text-sm text-[#888888]">Напишите предложение с этим словом</p>
+      <div className="flex items-center gap-3">
+        <h2 className="font-mono text-4xl font-bold text-[#e0e0e0]">
+          {exercise.english}
+        </h2>
+        <button
+          onClick={() => speak(exercise.english)}
+          className="flex h-9 w-9 items-center justify-center rounded-sm text-[#888888] transition-colors hover:bg-[#1e1e1e] hover:text-[#00ff88]"
+        >
+          <Volume2 size={20} />
+        </button>
+      </div>
       {exercise.transcription && (
         <p className="font-mono text-base text-[#666666]">
           {exercise.transcription}
@@ -332,11 +372,11 @@ function ExerciseFreeProduction({ exercise, onAnswer, disabled }: ExerciseProps)
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
           disabled={disabled}
-          placeholder="Write a sentence..."
+          placeholder="Ваше предложение..."
           className="flex-1 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3 text-sm text-[#e0e0e0] outline-none placeholder:text-[#666666] focus:border-[#00ff88]"
         />
         <Button onClick={handleSubmit} disabled={disabled || !input.trim()}>
-          Submit
+          Отправить
         </Button>
       </div>
     </div>
@@ -345,11 +385,14 @@ function ExerciseFreeProduction({ exercise, onAnswer, disabled }: ExerciseProps)
 
 // Type 7 -- Listening
 function ExerciseListening({ exercise, onAnswer, disabled }: ExerciseProps) {
+  const { speak } = useTTS();
   const [input, setInput] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     inputRef.current?.focus();
+    // Auto-speak on mount
+    speak(exercise.english);
   }, []);
 
   const handleSubmit = () => {
@@ -360,15 +403,19 @@ function ExerciseListening({ exercise, onAnswer, disabled }: ExerciseProps) {
 
   return (
     <div className="flex flex-col items-center gap-6 text-center">
-      <p className="text-sm text-[#888888]">Listen and type the word</p>
-      {exercise.sentence_en && (
-        <div className="max-w-lg rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-5 py-4">
-          <p className="text-base text-[#e0e0e0]">{exercise.sentence_en}</p>
-        </div>
+      <p className="text-sm text-[#888888]">Прослушайте и напишите слово</p>
+      <button
+        onClick={() => speak(exercise.english)}
+        className="flex h-16 w-16 items-center justify-center rounded-full bg-[#1e1e1e] text-[#00ff88] transition-colors hover:bg-[#2a2a2a]"
+        aria-label="Озвучить"
+      >
+        <Volume2 size={32} />
+      </button>
+      {exercise.hint && (
+        <p className="font-mono text-lg text-[#666666]">
+          {exercise.hint}
+        </p>
       )}
-      <p className="text-sm text-[#888888]">
-        {exercise.hint}
-      </p>
       <div className="mt-2 flex w-full max-w-md gap-2">
         <input
           ref={inputRef}
@@ -377,11 +424,11 @@ function ExerciseListening({ exercise, onAnswer, disabled }: ExerciseProps) {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
           disabled={disabled}
-          placeholder="Type the word..."
+          placeholder="Напишите слово..."
           className="flex-1 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3 text-sm text-[#e0e0e0] outline-none placeholder:text-[#666666] focus:border-[#00ff88]"
         />
         <Button onClick={handleSubmit} disabled={disabled || !input.trim()}>
-          Check
+          Проверить
         </Button>
       </div>
     </div>

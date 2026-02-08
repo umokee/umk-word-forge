@@ -124,18 +124,26 @@ def _get_distractors(
 # Session management
 # ---------------------------------------------------------------------------
 
-def create_session(db: DBSession, duration_minutes: int = 15) -> StartSessionResponse:
+def create_session(db: DBSession, duration_minutes: int | None = None) -> StartSessionResponse:
     """Start a new training session with generated exercises."""
     from backend.modules.learning.models import UserWord
     from backend.modules.words.models import Word
+    from backend.modules.settings.repository import get_settings
     from sqlalchemy.sql.expression import func
+
+    # Load user settings
+    settings = get_settings(db)
+
+    # Use settings values (with fallbacks)
+    duration = duration_minutes or settings.session_duration_minutes or 15
+    max_reviews = settings.max_reviews_per_session or 50
+    daily_new = settings.daily_new_words or 10
 
     session = repository.create_session(db)
 
-    # Calculate target exercise count based on duration
-    # ~10 seconds per exercise on average
-    target_exercises = max(10, duration_minutes * 6)
-    target_new_words = min(10, max(3, duration_minutes // 3))  # 3-10 new words
+    # Calculate target exercise count based on settings
+    target_exercises = min(max_reviews, max(10, duration * 4))  # ~15 sec per exercise
+    target_new_words = min(daily_new, target_exercises // 3)
 
     # Get words for the session
     now = datetime.now(timezone.utc)
