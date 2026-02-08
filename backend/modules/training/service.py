@@ -289,7 +289,12 @@ def record_answer(
     word = db.query(Word).filter(Word.id == answer.word_id).first()
     correct_answer = word.translations[0] if word and word.translations else ""
 
-    is_correct, rating = _evaluate_answer(answer.answer, correct_answer)
+    # Level 1 (Introduction) is always correct - user just acknowledges seeing the word
+    if answer.exercise_type == 1:
+        is_correct = True
+        rating = 4  # Good rating for introduction
+    else:
+        is_correct, rating = _evaluate_answer(answer.answer, correct_answer)
 
     # Update session counters
     update_data: dict = {"total_count": session.total_count + 1}

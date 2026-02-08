@@ -603,6 +603,7 @@ export default function Train() {
           word_id: exercise.word_id,
           answer,
           response_time_ms: responseTime,
+          exercise_type: exercise.exercise_type,
         });
         addAnswer(result);
         setFeedbackResult(result);

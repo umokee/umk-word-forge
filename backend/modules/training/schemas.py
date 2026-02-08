@@ -72,6 +72,7 @@ class AnswerSubmit(BaseModel):
     word_id: int
     answer: str
     response_time_ms: int = Field(..., ge=0)
+    exercise_type: int = Field(default=2, ge=1, le=7)  # 1-7, default to Recognition
 
 
 class AnswerResult(BaseModel):

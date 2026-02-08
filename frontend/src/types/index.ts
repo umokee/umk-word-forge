@@ -148,6 +148,7 @@ export interface AnswerSubmit {
   word_id: number;
   answer: string;
   response_time_ms: number;
+  exercise_type: number;
 }
 
 export interface AnswerResult {
