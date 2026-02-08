@@ -20,13 +20,15 @@ from backend.modules.settings.routes import router as settings_router
 # Logging — writes to file when LOG_DIR is set (for fail2ban), else stderr
 _log_dir = os.environ.get("WORDFORGE_LOG_DIR", "")
 _log_file = os.environ.get("WORDFORGE_LOG_FILE", "app.log")
-_handlers: list[logging.Handler] = [logging.StreamHandler()]
+_log_fmt = logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
+_handlers[0].setFormatter(_log_fmt)
+
 if _log_dir:
     os.makedirs(_log_dir, exist_ok=True)
     fh = logging.FileHandler(os.path.join(_log_dir, _log_file))
-    fh.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
+    fh.setFormatter(_log_fmt)
     _handlers.append(fh)
-logging.basicConfig(level=logging.INFO, handlers=_handlers)
+logging.basicConfig(level=logging.INFO, handlers=_handlers, force=True)
 
 Base.metadata.create_all(bind=engine)
 

@@ -33,7 +33,17 @@ export async function apiFetch<T>(
   }
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
+    const error = await res.json().catch(() => {
+      // Non-JSON response (e.g. nginx HTML error page) — provide a
+      // human-readable hint so the error screen is more helpful.
+      if (res.status === 400) {
+        return { detail: 'Bad request — ensure you are using HTTPS' };
+      }
+      if (res.status === 502 || res.status === 503) {
+        return { detail: 'Backend is not reachable — it may still be starting' };
+      }
+      return { detail: `HTTP ${res.status}` };
+    });
     throw new Error(error.detail || `HTTP ${res.status}`);
   }
 
