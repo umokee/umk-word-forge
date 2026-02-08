@@ -221,21 +221,66 @@ export interface HeatmapEntry {
 // ---------------------------------------------------------------------------
 
 export interface Settings {
+  // Training
   daily_new_words: number;
   session_duration_minutes: number;
+  max_reviews_per_session: number;
+  new_words_position: 'start' | 'middle' | 'end';
+  exercise_direction: 'en_to_ru' | 'ru_to_en' | 'mixed';
+  show_transcription: boolean;
+  show_example_translation: boolean;
+  auto_play_audio: boolean;
+  hint_delay_seconds: number;
   preferred_exercises: number[];
+
+  // Interface
+  keyboard_shortcuts: boolean;
+  show_progress_details: boolean;
+  session_end_summary: boolean;
+  animation_speed: 'fast' | 'normal' | 'slow' | 'none';
+  font_size: 'small' | 'normal' | 'large';
+
+  // TTS
   tts_enabled: boolean;
   tts_speed: number;
-  keyboard_shortcuts: boolean;
+  tts_voice: string;
+  tts_auto_play_exercises: boolean;
+
+  // Daily Goal
+  daily_goal_type: 'words' | 'minutes' | 'exercises';
+  daily_goal_value: number;
+
+  // AI
+  gemini_api_key: string | null;
+  ai_feedback_language: 'ru' | 'en';
+  ai_difficulty_context: 'simple' | 'medium' | 'natural';
 }
 
 export interface SettingsUpdate {
   daily_new_words?: number;
   session_duration_minutes?: number;
+  max_reviews_per_session?: number;
+  new_words_position?: string;
+  exercise_direction?: string;
+  show_transcription?: boolean;
+  show_example_translation?: boolean;
+  auto_play_audio?: boolean;
+  hint_delay_seconds?: number;
   preferred_exercises?: number[];
+  keyboard_shortcuts?: boolean;
+  show_progress_details?: boolean;
+  session_end_summary?: boolean;
+  animation_speed?: string;
+  font_size?: string;
   tts_enabled?: boolean;
   tts_speed?: number;
-  keyboard_shortcuts?: boolean;
+  tts_voice?: string;
+  tts_auto_play_exercises?: boolean;
+  daily_goal_type?: string;
+  daily_goal_value?: number;
+  gemini_api_key?: string | null;
+  ai_feedback_language?: string;
+  ai_difficulty_context?: string;
 }
 
 // ---------------------------------------------------------------------------
