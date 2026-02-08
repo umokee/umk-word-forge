@@ -120,6 +120,31 @@ def _get_distractors(
     return distractors
 
 
+def refresh_session_contexts(
+    db: DBSession, session_result: "StartSessionResponse"
+) -> "StartSessionResponse":
+    """Refresh exercise contexts after AI generation.
+
+    Re-fetches context sentences for all exercises in the session.
+    """
+    from backend.modules.words.models import WordContext
+    from .context_service import get_best_context
+
+    for exercise in session_result.exercises:
+        context = get_best_context(db, exercise.word_id)
+        if context:
+            exercise.sentence_en = context.sentence_en
+            exercise.sentence_ru = context.sentence_ru
+
+            # Update scrambled words for sentence builder
+            if exercise.exercise_type == 5 and context.sentence_en:
+                words = context.sentence_en.replace(".", "").replace(",", "").split()
+                random.shuffle(words)
+                exercise.scrambled_words = words
+
+    return session_result
+
+
 # ---------------------------------------------------------------------------
 # Session management
 # ---------------------------------------------------------------------------

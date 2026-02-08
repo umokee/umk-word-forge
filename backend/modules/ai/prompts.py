@@ -16,21 +16,45 @@ Analyze the sentence and return a JSON object with exactly these fields:
 Return ONLY the JSON object, no extra text or markdown formatting."""
 
 
-def generate_contexts_prompt(word: str, part_of_speech: str, count: int = 3) -> str:
+def generate_contexts_prompt(word: str, part_of_speech: str, translations: list[str], count: int = 3, difficulty: str = "simple") -> str:
     """Build a prompt that asks the AI to generate example sentences."""
-    return f"""You are an English language tutor creating example sentences for a Russian-speaking student at A1-A2 level.
 
-Generate {count} example sentences using the word "{word}" (part of speech: {part_of_speech}).
+    level_guide = {
+        "simple": "A1-A2 level (simple vocabulary, short sentences, everyday situations)",
+        "medium": "B1 level (moderate vocabulary, compound sentences, common topics)",
+        "natural": "B2+ level (natural, idiomatic usage as native speakers would use)",
+    }
 
-Requirements:
-- Sentences should be at A1-A2 difficulty level (simple, everyday vocabulary)
-- Each sentence should demonstrate a different common usage of the word
-- Include a Russian translation for each sentence
-- Rate difficulty as "A1" or "A2"
+    level_desc = level_guide.get(difficulty, level_guide["simple"])
+    translation_hint = ", ".join(translations[:3]) if translations else word
 
-Return a JSON array where each element has exactly these fields:
-- "en" (str): the English sentence
-- "ru" (str): the Russian translation
-- "difficulty" (str): "A1" or "A2"
+    return f"""You are creating example sentences for an English vocabulary learning app used by Russian speakers.
 
-Return ONLY the JSON array, no extra text or markdown formatting."""
+Word: "{word}"
+Part of speech: {part_of_speech}
+Translation: {translation_hint}
+
+Generate {count} high-quality example sentences that:
+1. Show REAL, NATURAL usage of "{word}" in context (not artificial textbook examples)
+2. Are at {level_desc}
+3. Each demonstrates a DIFFERENT meaning or usage pattern
+4. Are memorable and useful for everyday communication
+
+Guidelines:
+- Use common collocations and phrases with "{word}"
+- Include varied contexts (work, social, daily life, emotions, etc.)
+- Make sentences interesting and relatable
+- Translations should be natural Russian, not word-for-word
+
+Return a JSON array with {count} objects, each having:
+- "en": the English sentence (8-15 words ideal)
+- "ru": natural Russian translation
+- "difficulty": 1 for A1-A2, 2 for B1, 3 for B2+
+
+Example format:
+[
+  {{"en": "I need to make a decision by tomorrow.", "ru": "Мне нужно принять решение до завтра.", "difficulty": 1}},
+  ...
+]
+
+Return ONLY the JSON array, no markdown or extra text."""

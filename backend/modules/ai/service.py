@@ -34,10 +34,17 @@ class AIService:
         return AICheckResult(**data)
 
     async def generate_contexts(
-        self, word: str, part_of_speech: str, count: int = 3
+        self,
+        word: str,
+        part_of_speech: str,
+        translations: list[str] | None = None,
+        count: int = 3,
+        difficulty: str = "simple",
     ) -> AIContextResult:
         """Generate example context sentences using available AI providers."""
-        prompt = generate_contexts_prompt(word, part_of_speech, count)
+        prompt = generate_contexts_prompt(
+            word, part_of_speech, translations or [], count, difficulty
+        )
         raw = await self._call_with_fallback(prompt)
         data = self._parse_json(raw)
 

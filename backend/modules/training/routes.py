@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from backend.core.database import get_db
 
 from . import service
+from .context_service import ensure_ai_contexts
 from .schemas import (
     AnswerResult,
     AnswerSubmit,
@@ -18,13 +19,22 @@ router = APIRouter(prefix="/api/training", tags=["training"])
 
 
 @router.post("/session", response_model=StartSessionResponse, status_code=201)
-def start_session(
+async def start_session(
     body: SessionCreate | None = None,
     db: Session = Depends(get_db),
 ) -> StartSessionResponse:
     """Start a new training session with exercises."""
     duration = body.duration_minutes if body else 15
-    return service.create_session(db, duration_minutes=duration)
+    result = service.create_session(db, duration_minutes=duration)
+
+    # Generate AI contexts for words that don't have them (async)
+    for exercise in result.exercises:
+        await ensure_ai_contexts(db, exercise.word_id)
+
+    # Refresh exercises with new contexts
+    result = service.refresh_session_contexts(db, result)
+
+    return result
 
 
 @router.get("/session/{session_id}", response_model=SessionResponse)
