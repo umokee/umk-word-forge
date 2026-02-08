@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+venv/
+.venv/
+
+# Database
+*.db
+data/
+frontend/data/
+
+# Environment
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+*.tsbuildinfo
+
+# Seed cache
+backend/seed/data/*.txt
+backend/seed/data/*.csv
+backend/seed/data/*.json
+
+# OS
+.DS_Store
+Thumbs.db
