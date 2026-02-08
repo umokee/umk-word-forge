@@ -10,12 +10,21 @@ let
   enable = helpers.hasIn "services" "wordforge";
 
   gitRepo = "https://github.com/umokee/umk-word-forge.git";
-  gitBranch = "claude/build-app-from-spec-qPE1y";
+  gitBranch = "claude/fix-http-request-validation-y9WLJ";
 
   domain = "words.umkcloud.xyz";
   publicPort = 8889;
   backendPort = 8001;
   backendHost = "127.0.0.1";
+
+  # mTLS settings
+  mtlsCAPath = "${secretsDir}/ca.crt";
+
+  # IP whitelist (добавь свои IP, пустой список = только mTLS)
+  allowedIPs = [
+    # "1.2.3.4"        # домашний IP
+    # "10.0.0.0/8"     # VPN сеть
+  ];
 
   projectPath = "/var/lib/wordforge";
   secretsDir = "/var/lib/wordforge-secrets";
@@ -58,6 +67,113 @@ in
       "d ${dataDir} 0750 ${user} ${group} -"
       "f ${logDir}/app.log 0640 ${user} ${group} -"
     ];
+
+    # Скрипт для генерации mTLS сертификатов
+    environment.systemPackages = [
+      pkgs.openssl
+
+      # Скрипт для создания клиентского сертификата
+      (pkgs.writeShellScriptBin "wordforge-create-client-cert" ''
+        set -e
+        NAME="''${1:-client}"
+        DAYS="''${2:-365}"
+        PASSWORD="''${3:-}"
+
+        CA_DIR="${secretsDir}"
+        OUT_DIR="''${CA_DIR}/clients"
+        mkdir -p "$OUT_DIR"
+
+        if [ ! -f "$CA_DIR/ca.key" ] || [ ! -f "$CA_DIR/ca.crt" ]; then
+          echo "Error: CA not found. Run: sudo systemctl start wordforge-mtls-setup"
+          exit 1
+        fi
+
+        echo "Creating client certificate: $NAME"
+
+        # Генерируем ключ клиента
+        ${pkgs.openssl}/bin/openssl genrsa -out "$OUT_DIR/$NAME.key" 2048
+
+        # Создаём CSR
+        ${pkgs.openssl}/bin/openssl req -new \
+          -key "$OUT_DIR/$NAME.key" \
+          -out "$OUT_DIR/$NAME.csr" \
+          -subj "/CN=$NAME/O=WordForge-Client"
+
+        # Подписываем сертификат
+        ${pkgs.openssl}/bin/openssl x509 -req \
+          -in "$OUT_DIR/$NAME.csr" \
+          -CA "$CA_DIR/ca.crt" \
+          -CAkey "$CA_DIR/ca.key" \
+          -CAcreateserial \
+          -out "$OUT_DIR/$NAME.crt" \
+          -days "$DAYS"
+
+        # Создаём .p12 для импорта в браузер/телефон
+        if [ -n "$PASSWORD" ]; then
+          ${pkgs.openssl}/bin/openssl pkcs12 -export \
+            -in "$OUT_DIR/$NAME.crt" \
+            -inkey "$OUT_DIR/$NAME.key" \
+            -out "$OUT_DIR/$NAME.p12" \
+            -passout "pass:$PASSWORD"
+        else
+          ${pkgs.openssl}/bin/openssl pkcs12 -export \
+            -in "$OUT_DIR/$NAME.crt" \
+            -inkey "$OUT_DIR/$NAME.key" \
+            -out "$OUT_DIR/$NAME.p12" \
+            -passout "pass:"
+        fi
+
+        rm -f "$OUT_DIR/$NAME.csr"
+
+        echo ""
+        echo "=== Client certificate created ==="
+        echo "Certificate: $OUT_DIR/$NAME.crt"
+        echo "Key:         $OUT_DIR/$NAME.key"
+        echo "PKCS12:      $OUT_DIR/$NAME.p12 (for browser/phone import)"
+        echo ""
+        echo "Import $NAME.p12 into your browser/phone."
+        echo "Copy to your machine: scp root@server:$OUT_DIR/$NAME.p12 ./"
+      '')
+    ];
+
+    # Oneshot сервис для создания CA (если ещё нет)
+    systemd.services.wordforge-mtls-setup = {
+      description = "Setup mTLS CA for WordForge";
+      wantedBy = [ "multi-user.target" ];
+      before = [ "nginx.service" ];
+      path = [ pkgs.openssl ];
+
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        User = "root";
+      };
+
+      script = ''
+        set -e
+        mkdir -p ${secretsDir}
+
+        # Создаём CA если не существует
+        if [ ! -f ${secretsDir}/ca.key ]; then
+          echo "Generating mTLS CA..."
+          openssl genrsa -out ${secretsDir}/ca.key 4096
+          openssl req -new -x509 -days 3650 -key ${secretsDir}/ca.key \
+            -out ${secretsDir}/ca.crt \
+            -subj "/CN=WordForge-CA/O=WordForge"
+          chmod 600 ${secretsDir}/ca.key
+          chmod 644 ${secretsDir}/ca.crt
+          echo "CA created: ${secretsDir}/ca.crt"
+        fi
+
+        # Проверяем что CA существует
+        if [ ! -f ${mtlsCAPath} ]; then
+          echo "ERROR: CA certificate not found at ${mtlsCAPath}"
+          exit 1
+        fi
+
+        echo "mTLS CA ready"
+      '';
+    };
 
     # --- Secrets (sops-nix) ---
     sops.secrets."word-forge/api-key" = {
@@ -207,7 +323,7 @@ in
         TimeoutStartSec = "infinity";
 
         EnvironmentFile = config.sops.templates."wordforge-env".path;
-        ExecStart = "${projectPath}/venv/bin/uvicorn backend.main:app --host ${backendHost} --port ${toString backendPort} --proxy-headers --forwarded-allow-ips='${backendHost}'";
+        ExecStart = "${projectPath}/venv/bin/uvicorn backend.main:app --host ${backendHost} --port ${toString backendPort}";
         Restart = "always";
         RestartSec = "10";
 
@@ -332,23 +448,43 @@ in
           }
         ];
 
+        # mTLS: требуем клиентский сертификат
+        extraConfig = ''
+          ssl_client_certificate ${mtlsCAPath};
+          ssl_verify_client on;
+        '';
+
+        locations."/.well-known/acme-challenge/" = {
+          # ACME challenge должен работать без mTLS
+          extraConfig = ''
+            ssl_verify_client off;
+            auth_basic off;
+          '';
+        };
+
         locations."/api/" = {
           proxyPass = "http://${backendHost}:${toString backendPort}";
           extraConfig = ''
+            # Редирект HTTP -> HTTPS
+            if ($scheme = "http") {
+              return 301 https://$host:${toString publicPort}$request_uri;
+            }
+
+            # IP whitelist (если указаны IP)
+            ${lib.optionalString (allowedIPs != []) ''
+              ${lib.concatMapStrings (ip: "allow ${ip};\n") allowedIPs}
+              deny all;
+            ''}
+
             limit_req zone=wf_api_limit burst=20 nodelay;
             limit_conn wf_conn_limit 15;
 
-            # Explicit HTTP/1.1 — required in the location block because
-            # proxy_set_header here discards ALL inherited proxy_set_header
-            # from the http block (recommendedProxySettings).  Without this
-            # the Connection hop-by-hop header leaks to the backend, causing
-            # keep-alive desync and "Invalid HTTP request received" in uvicorn.
-            proxy_http_version 1.1;
-            proxy_set_header Connection "";
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Client-Cert-DN $ssl_client_s_dn;
+            add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
           '';
         };
 
@@ -356,10 +492,22 @@ in
           root = frontendBuildDir;
           tryFiles = "$uri $uri/ /index.html";
           extraConfig = ''
-            add_header X-Content-Type-Options "nosniff";
-            add_header X-Frame-Options "SAMEORIGIN";
-            add_header X-XSS-Protection "1; mode=block";
-            add_header Referrer-Policy "no-referrer-when-downgrade";
+            # Редирект HTTP -> HTTPS
+            if ($scheme = "http") {
+              return 301 https://$host:${toString publicPort}$request_uri;
+            }
+
+            # IP whitelist (если указаны IP)
+            ${lib.optionalString (allowedIPs != []) ''
+              ${lib.concatMapStrings (ip: "allow ${ip};\n") allowedIPs}
+              deny all;
+            ''}
+
+            add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            add_header X-Frame-Options "SAMEORIGIN" always;
+            add_header X-XSS-Protection "1; mode=block" always;
+            add_header Referrer-Policy "no-referrer-when-downgrade" always;
 
             add_header Cache-Control "public, max-age=3600";
             limit_conn wf_conn_limit 30;

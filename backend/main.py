@@ -21,6 +21,8 @@ from backend.modules.settings.routes import router as settings_router
 _log_dir = os.environ.get("WORDFORGE_LOG_DIR", "")
 _log_file = os.environ.get("WORDFORGE_LOG_FILE", "app.log")
 _log_fmt = logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
+
+_handlers: list[logging.Handler] = [logging.StreamHandler()]
 _handlers[0].setFormatter(_log_fmt)
 
 if _log_dir:
@@ -28,6 +30,7 @@ if _log_dir:
     fh = logging.FileHandler(os.path.join(_log_dir, _log_file))
     fh.setFormatter(_log_fmt)
     _handlers.append(fh)
+
 logging.basicConfig(level=logging.INFO, handlers=_handlers, force=True)
 
 Base.metadata.create_all(bind=engine)
