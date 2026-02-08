@@ -308,8 +308,8 @@ export default function Stats() {
                 <AreaChart data={areaChartData}>
                   <defs>
                     <linearGradient id="colorWords" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#00ff88" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#00ff88" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid
@@ -334,7 +334,7 @@ export default function Stats() {
                   <Area
                     type="monotone"
                     dataKey="words"
-                    stroke="#6366F1"
+                    stroke="#00ff88"
                     strokeWidth={2}
                     fill="url(#colorWords)"
                   />
@@ -375,7 +375,7 @@ export default function Stats() {
                   <Tooltip content={<ChartTooltip unit="words" />} />
                   <Bar
                     dataKey="count"
-                    fill="#6366F1"
+                    fill="#00ff88"
                     radius={[2, 2, 0, 0]}
                     maxBarSize={40}
                   />

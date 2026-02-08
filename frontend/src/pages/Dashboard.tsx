@@ -254,7 +254,7 @@ export default function Dashboard() {
                 />
                 <Bar
                   dataKey="words"
-                  fill="#6366F1"
+                  fill="#00ff88"
                   radius={[2, 2, 0, 0]}
                   maxBarSize={40}
                 />

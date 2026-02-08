@@ -14,10 +14,10 @@ interface HeatmapCalendarProps {
 
 const levelColors: Record<number, string> = {
   0: '#1e1e1e',
-  1: 'rgb(49, 46, 129)',   // indigo-900
-  2: 'rgb(67, 56, 202)',   // indigo-700
-  3: 'rgb(99, 102, 241)',  // #00ff88
-  4: 'rgb(129, 140, 248)', // #00ff88
+  1: '#0a3d2a',   // dark green
+  2: '#0d5c3d',   // medium green
+  3: '#00aa55',   // accent dim
+  4: '#00ff88',   // accent bright
 };
 
 const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

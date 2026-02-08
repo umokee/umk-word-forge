@@ -10,14 +10,14 @@ interface WordTableProps {
 }
 
 const levelBadgeColors: Record<number, string> = {
-  0: 'bg-gray-500/10 text-gray-400',
-  1: 'bg-blue-500/10 text-blue-400',
-  2: 'bg-cyan-500/10 text-cyan-400',
-  3: 'bg-green-500/10 text-green-400',
-  4: 'bg-yellow-500/10 text-yellow-400',
-  5: 'bg-orange-500/10 text-orange-400',
-  6: 'bg-purple-500/10 text-purple-400',
-  7: 'bg-[#00ff88]/10 text-[#00ff88]',
+  0: 'bg-[#2a2a2a] text-[#666666]',
+  1: 'bg-[#0a3d2a]/50 text-[#0d5c3d]',
+  2: 'bg-[#0d5c3d]/50 text-[#108050]',
+  3: 'bg-[#108050]/50 text-[#15a060]',
+  4: 'bg-[#15a060]/50 text-[#00aa55]',
+  5: 'bg-[#00aa55]/50 text-[#00cc6a]',
+  6: 'bg-[#00cc6a]/30 text-[#00ff88]',
+  7: 'bg-[#00ff88]/20 text-[#00ff88]',
 };
 
 const levelNames: Record<number, string> = {
@@ -32,12 +32,12 @@ const levelNames: Record<number, string> = {
 };
 
 const cefrBadgeColors: Record<string, string> = {
-  A1: 'bg-[#00ff88]/10 text-[#00ff88]',
-  A2: 'bg-green-500/10 text-green-400',
-  B1: 'bg-yellow-500/10 text-yellow-400',
-  B2: 'bg-orange-500/10 text-orange-400',
-  C1: 'bg-red-500/10 text-red-400',
-  C2: 'bg-purple-500/10 text-purple-400',
+  A1: 'bg-[#00ff88]/20 text-[#00ff88]',
+  A2: 'bg-[#00cc6a]/20 text-[#00cc6a]',
+  B1: 'bg-[#ffaa00]/20 text-[#ffaa00]',
+  B2: 'bg-[#ff8800]/20 text-[#ff8800]',
+  C1: 'bg-[#ff4444]/20 text-[#ff4444]',
+  C2: 'bg-[#ff4444]/30 text-[#ff6666]',
 };
 
 export function WordTable({ words, onRowClick }: WordTableProps) {

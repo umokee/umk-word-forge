@@ -17,13 +17,13 @@ const levelNames: Record<number, string> = {
 };
 
 const levelColors: Record<number, string> = {
-  1: 'bg-[#00ff88]',
-  2: 'bg-[#00ff88]',
-  3: 'bg-[#00ff88]',
-  4: 'bg-violet-500',
-  5: 'bg-violet-400',
-  6: 'bg-purple-500',
-  7: 'bg-purple-400',
+  1: 'bg-[#0a3d2a]',
+  2: 'bg-[#0d5c3d]',
+  3: 'bg-[#108050]',
+  4: 'bg-[#15a060]',
+  5: 'bg-[#00aa55]',
+  6: 'bg-[#00cc6a]',
+  7: 'bg-[#00ff88]',
 };
 
 export function LevelDistribution({ distribution, className }: LevelDistributionProps) {

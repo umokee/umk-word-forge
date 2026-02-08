@@ -18,8 +18,8 @@ export function DailyChart({ data }: DailyChartProps) {
       <AreaChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
         <defs>
           <linearGradient id="dailyChartGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#6366F1" stopOpacity={0.3} />
-            <stop offset="100%" stopColor="#6366F1" stopOpacity={0} />
+            <stop offset="0%" stopColor="#00ff88" stopOpacity={0.3} />
+            <stop offset="100%" stopColor="#00ff88" stopOpacity={0} />
           </linearGradient>
         </defs>
         <XAxis
@@ -48,7 +48,7 @@ export function DailyChart({ data }: DailyChartProps) {
         <Area
           type="monotone"
           dataKey="count"
-          stroke="#6366F1"
+          stroke="#00ff88"
           strokeWidth={2}
           fill="url(#dailyChartGradient)"
         />
