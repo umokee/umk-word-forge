@@ -286,27 +286,20 @@ in
 
       proxyTimeout = "60s";
 
-      # IP whitelist через geo модуль
-      commonHttpConfig = ''
-        proxy_headers_hash_max_size 1024;
-        proxy_headers_hash_bucket_size 128;
-
-        geo $tm_allowed {
-          default 0;
-          ${lib.concatMapStrings (ip: "${ip} 1;\n          ") allowedIPs}
-        }
-      '';
-
       virtualHosts."${domain}" = {
         listen = [
           { addr = "0.0.0.0"; port = publicPort; }
         ];
 
+        # IP whitelist через allow/deny
+        extraConfig = ''
+          ${lib.concatMapStrings (ip: "allow ${ip};\n          ") allowedIPs}
+          deny all;
+        '';
+
         locations."/api/" = {
           proxyPass = "http://${backendHost}:${toString backendPort}";
           extraConfig = ''
-            if ($tm_allowed = 0) { return 403; }
-
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -317,15 +310,11 @@ in
         locations."/" = {
           root = frontendBuildDir;
           tryFiles = "$uri $uri/ /index.html";
-          extraConfig = ''
-            if ($tm_allowed = 0) { return 403; }
-          '';
         };
 
         locations."~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf)$" = {
           root = frontendBuildDir;
           extraConfig = ''
-            if ($tm_allowed = 0) { return 403; }
             add_header Cache-Control "public, max-age=31536000, immutable";
             access_log off;
           '';

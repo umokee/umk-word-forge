@@ -301,24 +301,20 @@ in
       recommendedOptimisation = lib.mkDefault true;
       recommendedProxySettings = lib.mkDefault true;
 
-      # IP whitelist через geo модуль
-      commonHttpConfig = ''
-        geo $wf_allowed {
-          default 0;
-          ${lib.concatMapStrings (ip: "${ip} 1;\n          ") allowedIPs}
-        }
-      '';
-
       virtualHosts."${domain}" = {
         listen = [
           { addr = "0.0.0.0"; port = publicPort; }
         ];
 
+        # IP whitelist через allow/deny
+        extraConfig = ''
+          ${lib.concatMapStrings (ip: "allow ${ip};\n          ") allowedIPs}
+          deny all;
+        '';
+
         locations."/api/" = {
           proxyPass = "http://${backendHost}:${toString backendPort}";
           extraConfig = ''
-            if ($wf_allowed = 0) { return 403; }
-
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -329,15 +325,11 @@ in
         locations."/" = {
           root = frontendBuildDir;
           tryFiles = "$uri $uri/ /index.html";
-          extraConfig = ''
-            if ($wf_allowed = 0) { return 403; }
-          '';
         };
 
         locations."~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf)$" = {
           root = frontendBuildDir;
           extraConfig = ''
-            if ($wf_allowed = 0) { return 403; }
             add_header Cache-Control "public, max-age=31536000, immutable";
             access_log off;
           '';
