@@ -1,8 +1,13 @@
 """Tatoeba API client for fetching example sentences with translations."""
 
-import asyncio
-import aiohttp
 from typing import Optional
+
+try:
+    import asyncio
+    import aiohttp
+    ASYNC_AVAILABLE = True
+except ImportError:
+    ASYNC_AVAILABLE = False
 
 
 class TatoebaAPI:
@@ -117,5 +122,7 @@ class TatoebaAPI:
 # Synchronous wrapper for use in seed script
 def get_tatoeba_sentences(query: str, limit: int = 5) -> list[dict]:
     """Synchronous wrapper for getting Tatoeba sentences."""
+    if not ASYNC_AVAILABLE:
+        return []
     api = TatoebaAPI()
     return asyncio.run(api.search_sentences(query, limit=limit))

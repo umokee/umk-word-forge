@@ -1,8 +1,14 @@
 """Loader for irregular verbs from GitHub dataset and local data."""
 
-import asyncio
-import aiohttp
 from typing import Optional
+
+# Async imports are optional - only needed for GitHub fetching
+try:
+    import asyncio
+    import aiohttp
+    ASYNC_AVAILABLE = True
+except ImportError:
+    ASYNC_AVAILABLE = False
 
 
 # Core irregular verbs with translations (most common ~200)
@@ -177,7 +183,11 @@ class IrregularVerbsLoader:
         """Fetch additional verbs from GitHub dataset.
 
         Note: GitHub data may not have translations, so we merge with local data.
+        Requires aiohttp to be installed.
         """
+        if not ASYNC_AVAILABLE:
+            return []
+
         if self._cache is not None:
             return self._cache
 

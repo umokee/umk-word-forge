@@ -1,8 +1,14 @@
 """Loader for phrasal verbs from local data and GitHub datasets."""
 
-import asyncio
-import aiohttp
 from typing import Optional
+
+# Async imports are optional - only needed for GitHub fetching
+try:
+    import asyncio
+    import aiohttp
+    ASYNC_AVAILABLE = True
+except ImportError:
+    ASYNC_AVAILABLE = False
 
 
 # Core phrasal verbs with translations and definitions (~300)
@@ -487,7 +493,11 @@ class PhrasalVerbsLoader:
         """Fetch additional phrasal verbs from GitHub dataset.
 
         Note: GitHub data may have different format, so we normalize.
+        Requires aiohttp to be installed.
         """
+        if not ASYNC_AVAILABLE:
+            return []
+
         if self._cache is not None:
             return self._cache
 

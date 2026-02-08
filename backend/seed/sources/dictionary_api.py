@@ -1,9 +1,14 @@
 """Free Dictionary API client for word definitions and phonetics."""
 
-import asyncio
-import aiohttp
 from dataclasses import dataclass, field
 from typing import Optional
+
+try:
+    import asyncio
+    import aiohttp
+    ASYNC_AVAILABLE = True
+except ImportError:
+    ASYNC_AVAILABLE = False
 
 
 @dataclass
@@ -110,5 +115,7 @@ class FreeDictionaryAPI:
 # Synchronous wrapper
 def get_dictionary_entry(word: str) -> Optional[DictionaryEntry]:
     """Synchronous wrapper for getting dictionary entry."""
+    if not ASYNC_AVAILABLE:
+        return None
     api = FreeDictionaryAPI()
     return asyncio.run(api.get_word(word))
