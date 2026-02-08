@@ -35,7 +35,7 @@ export function WordFilters({
 
       {/* Level filter */}
       <div className="flex flex-col gap-1.5">
-        <span className="text-xs uppercase tracking-wider text-[#5C5C66] font-medium">
+        <span className="text-xs uppercase tracking-wider text-[#666666] font-medium">
           Level
         </span>
         <div className="flex flex-wrap gap-1.5">
@@ -46,8 +46,8 @@ export function WordFilters({
               className={cn(
                 'rounded-sm px-2.5 py-1 text-xs font-mono transition-colors',
                 currentLevel === level
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-[#1C1C20] text-[#8B8B96] hover:bg-[#2A2A30]'
+                  ? 'bg-[#00ff88] text-white'
+                  : 'bg-[#1e1e1e] text-[#888888] hover:bg-[#2a2a2a]'
               )}
             >
               {level}
@@ -58,7 +58,7 @@ export function WordFilters({
 
       {/* CEFR filter */}
       <div className="flex flex-col gap-1.5">
-        <span className="text-xs uppercase tracking-wider text-[#5C5C66] font-medium">
+        <span className="text-xs uppercase tracking-wider text-[#666666] font-medium">
           CEFR
         </span>
         <div className="flex flex-wrap gap-1.5">
@@ -69,8 +69,8 @@ export function WordFilters({
               className={cn(
                 'rounded-sm px-2.5 py-1 text-xs font-mono transition-colors',
                 currentCefr === cefr
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-[#1C1C20] text-[#8B8B96] hover:bg-[#2A2A30]'
+                  ? 'bg-[#00ff88] text-white'
+                  : 'bg-[#1e1e1e] text-[#888888] hover:bg-[#2a2a2a]'
               )}
             >
               {cefr}

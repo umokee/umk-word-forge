@@ -44,15 +44,15 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
       <div
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          'relative z-10 w-full max-w-lg bg-[#141416] border border-[#2A2A30] rounded-sm shadow-xl'
+          'relative z-10 w-full max-w-lg bg-[#141414] border border-[#2a2a2a] rounded-sm shadow-xl'
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#2A2A30] px-6 py-4">
-          <h2 className="text-lg font-semibold text-[#E8E8EC]">{title}</h2>
+        <div className="flex items-center justify-between border-b border-[#2a2a2a] px-6 py-4">
+          <h2 className="text-lg font-semibold text-[#e0e0e0]">{title}</h2>
           <button
             onClick={onClose}
-            className="text-[#5C5C66] hover:text-[#E8E8EC] transition-colors rounded-sm p-1 hover:bg-[#1C1C20]"
+            className="text-[#666666] hover:text-[#e0e0e0] transition-colors rounded-sm p-1 hover:bg-[#1e1e1e]"
           >
             <X size={18} />
           </button>

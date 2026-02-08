@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps {
@@ -15,17 +15,18 @@ interface ButtonProps {
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: 'bg-indigo-600 hover:bg-indigo-500 text-white',
+  primary: 'bg-[#00ff88] hover:bg-[#00aa55] text-[#0a0a0a] font-semibold uppercase tracking-wider',
   secondary:
-    'bg-transparent border border-[#2A2A30] hover:border-[#3A3A42] text-[#E8E8EC]',
-  ghost: 'bg-transparent hover:bg-[#1C1C20] text-[#8B8B96]',
-  danger: 'bg-red-600 hover:bg-red-500 text-white',
+    'bg-[#1e1e1e] border border-[#2a2a2a] hover:border-[#00ff88] text-[#e0e0e0]',
+  ghost: 'bg-transparent hover:bg-[#1e1e1e] text-[#888888] hover:text-[#e0e0e0]',
+  danger: 'bg-transparent border border-[#ff4444] text-[#ff4444] hover:bg-[#ff4444] hover:text-[#0a0a0a]',
+  success: 'bg-transparent border border-[#00ff88] text-[#00ff88] hover:bg-[#00ff88] hover:text-[#0a0a0a]',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'px-2.5 py-1 text-xs',
+  sm: 'px-3 py-1.5 text-xs',
   md: 'px-4 py-2 text-sm',
-  lg: 'px-6 py-2.5 text-base',
+  lg: 'px-6 py-2.5 text-sm',
 };
 
 export function Button({
@@ -43,7 +44,7 @@ export function Button({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'inline-flex items-center justify-center rounded-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-[#0A0A0B]',
+        'inline-flex items-center justify-center font-medium transition-colors focus:outline-none',
         variantStyles[variant],
         sizeStyles[size],
         disabled && 'opacity-50 cursor-not-allowed pointer-events-none',

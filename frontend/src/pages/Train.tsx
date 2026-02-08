@@ -25,12 +25,12 @@ interface ExerciseProps {
 function ExerciseIntroduction({ exercise, onAnswer, disabled }: ExerciseProps) {
   return (
     <div className="flex flex-col items-center gap-6 text-center">
-      <p className="text-sm text-[#8B8B96]">New word</p>
-      <h2 className="font-mono text-5xl font-bold text-[#E8E8EC]">
+      <p className="text-sm text-[#888888]">New word</p>
+      <h2 className="font-mono text-5xl font-bold text-[#e0e0e0]">
         {exercise.english}
       </h2>
       {exercise.transcription && (
-        <p className="font-mono text-lg text-[#5C5C66]">
+        <p className="font-mono text-lg text-[#666666]">
           {exercise.transcription}
         </p>
       )}
@@ -39,16 +39,16 @@ function ExerciseIntroduction({ exercise, onAnswer, disabled }: ExerciseProps) {
       )}
       <div className="space-y-1">
         {exercise.translations.map((t, i) => (
-          <p key={i} className="text-lg text-[#E8E8EC]">
+          <p key={i} className="text-lg text-[#e0e0e0]">
             {t}
           </p>
         ))}
       </div>
       {exercise.sentence_en && (
-        <div className="mt-2 max-w-md rounded-sm border border-[#2A2A30] bg-[#1C1C20] px-4 py-3">
-          <p className="text-sm text-[#E8E8EC]">{exercise.sentence_en}</p>
+        <div className="mt-2 max-w-md rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3">
+          <p className="text-sm text-[#e0e0e0]">{exercise.sentence_en}</p>
           {exercise.sentence_ru && (
-            <p className="mt-1 text-xs text-[#5C5C66]">
+            <p className="mt-1 text-xs text-[#666666]">
               {exercise.sentence_ru}
             </p>
           )}
@@ -88,10 +88,10 @@ function ExerciseRecognition({ exercise, onAnswer, disabled }: ExerciseProps) {
 
   return (
     <div className="flex flex-col items-center gap-6 text-center">
-      <p className="text-sm text-[#8B8B96]">{label}</p>
-      <h2 className="font-mono text-4xl font-bold text-[#E8E8EC]">{prompt}</h2>
+      <p className="text-sm text-[#888888]">{label}</p>
+      <h2 className="font-mono text-4xl font-bold text-[#e0e0e0]">{prompt}</h2>
       {!exercise.reverse && exercise.transcription && (
-        <p className="font-mono text-base text-[#5C5C66]">
+        <p className="font-mono text-base text-[#666666]">
           {exercise.transcription}
         </p>
       )}
@@ -102,11 +102,11 @@ function ExerciseRecognition({ exercise, onAnswer, disabled }: ExerciseProps) {
             disabled={disabled}
             onClick={() => onAnswer(option)}
             className={cn(
-              'flex items-center gap-3 rounded-sm border border-[#2A2A30] bg-[#1C1C20] px-4 py-3 text-left text-sm text-[#E8E8EC] transition-colors hover:border-indigo-500 hover:bg-indigo-500/5',
+              'flex items-center gap-3 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3 text-left text-sm text-[#e0e0e0] transition-colors hover:border-[#00ff88] hover:bg-[#00ff88]/5',
               disabled && 'pointer-events-none opacity-50',
             )}
           >
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm bg-[#2A2A30] font-mono text-xs text-[#8B8B96]">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm bg-[#2a2a2a] font-mono text-xs text-[#888888]">
               {idx + 1}
             </span>
             {option}
@@ -134,12 +134,12 @@ function ExerciseRecall({ exercise, onAnswer, disabled }: ExerciseProps) {
 
   return (
     <div className="flex flex-col items-center gap-6 text-center">
-      <p className="text-sm text-[#8B8B96]">Type the translation</p>
-      <h2 className="font-mono text-4xl font-bold text-[#E8E8EC]">
+      <p className="text-sm text-[#888888]">Type the translation</p>
+      <h2 className="font-mono text-4xl font-bold text-[#e0e0e0]">
         {exercise.english}
       </h2>
       {exercise.transcription && (
-        <p className="font-mono text-base text-[#5C5C66]">
+        <p className="font-mono text-base text-[#666666]">
           {exercise.transcription}
         </p>
       )}
@@ -152,7 +152,7 @@ function ExerciseRecall({ exercise, onAnswer, disabled }: ExerciseProps) {
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
           disabled={disabled}
           placeholder="Your answer..."
-          className="flex-1 rounded-sm border border-[#2A2A30] bg-[#1C1C20] px-4 py-3 text-sm text-[#E8E8EC] outline-none placeholder:text-[#5C5C66] focus:border-indigo-500"
+          className="flex-1 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3 text-sm text-[#e0e0e0] outline-none placeholder:text-[#666666] focus:border-[#00ff88]"
         />
         <Button onClick={handleSubmit} disabled={disabled || !input.trim()}>
           Check
@@ -177,18 +177,18 @@ function ExerciseContext({ exercise, onAnswer, disabled }: ExerciseProps) {
 
   return (
     <div className="flex flex-col items-center gap-6 text-center">
-      <p className="text-sm text-[#8B8B96]">Choose the correct translation in context</p>
+      <p className="text-sm text-[#888888]">Choose the correct translation in context</p>
       {exercise.sentence_en && (
-        <div className="max-w-lg rounded-sm border border-[#2A2A30] bg-[#1C1C20] px-5 py-4">
-          <p className="text-base text-[#E8E8EC]">{exercise.sentence_en}</p>
+        <div className="max-w-lg rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-5 py-4">
+          <p className="text-base text-[#e0e0e0]">{exercise.sentence_en}</p>
           {exercise.sentence_ru && (
-            <p className="mt-1 text-xs text-[#5C5C66]">
+            <p className="mt-1 text-xs text-[#666666]">
               {exercise.sentence_ru}
             </p>
           )}
         </div>
       )}
-      <h2 className="font-mono text-3xl font-bold text-[#E8E8EC]">
+      <h2 className="font-mono text-3xl font-bold text-[#e0e0e0]">
         {exercise.english}
       </h2>
       <div className="mt-2 grid w-full max-w-md grid-cols-1 gap-3">
@@ -198,11 +198,11 @@ function ExerciseContext({ exercise, onAnswer, disabled }: ExerciseProps) {
             disabled={disabled}
             onClick={() => onAnswer(option)}
             className={cn(
-              'flex items-center gap-3 rounded-sm border border-[#2A2A30] bg-[#1C1C20] px-4 py-3 text-left text-sm text-[#E8E8EC] transition-colors hover:border-indigo-500 hover:bg-indigo-500/5',
+              'flex items-center gap-3 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3 text-left text-sm text-[#e0e0e0] transition-colors hover:border-[#00ff88] hover:bg-[#00ff88]/5',
               disabled && 'pointer-events-none opacity-50',
             )}
           >
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm bg-[#2A2A30] font-mono text-xs text-[#8B8B96]">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm bg-[#2a2a2a] font-mono text-xs text-[#888888]">
               {idx + 1}
             </span>
             {option}
@@ -242,21 +242,21 @@ function ExerciseSentenceBuilder({ exercise, onAnswer, disabled }: ExerciseProps
 
   return (
     <div className="flex flex-col items-center gap-6 text-center">
-      <p className="text-sm text-[#8B8B96]">Arrange the words to form a sentence</p>
+      <p className="text-sm text-[#888888]">Arrange the words to form a sentence</p>
       {exercise.sentence_ru && (
-        <p className="text-base text-[#8B8B96]">{exercise.sentence_ru}</p>
+        <p className="text-base text-[#888888]">{exercise.sentence_ru}</p>
       )}
 
       {/* Built sentence area */}
-      <div className="flex min-h-[52px] w-full max-w-lg flex-wrap items-center gap-2 rounded-sm border border-[#2A2A30] bg-[#1C1C20] px-4 py-3">
+      <div className="flex min-h-[52px] w-full max-w-lg flex-wrap items-center gap-2 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3">
         {selected.length === 0 && (
-          <span className="text-sm text-[#5C5C66]">Click words below to build the sentence...</span>
+          <span className="text-sm text-[#666666]">Click words below to build the sentence...</span>
         )}
         {selected.map((idx, selIdx) => (
           <button
             key={selIdx}
             onClick={() => removeWord(selIdx)}
-            className="rounded-sm border border-indigo-500/30 bg-indigo-500/10 px-2.5 py-1 text-sm text-indigo-300 transition-colors hover:bg-indigo-500/20"
+            className="rounded-sm border border-[#00ff88]/30 bg-[#00ff88]/10 px-2.5 py-1 text-sm text-[#00aa55] transition-colors hover:bg-[#00ff88]/20"
           >
             {(exercise.scrambled_words ?? [])[Number(idx)]}
           </button>
@@ -273,10 +273,10 @@ function ExerciseSentenceBuilder({ exercise, onAnswer, disabled }: ExerciseProps
               disabled={isUsed || disabled}
               onClick={() => addWord(word, idx)}
               className={cn(
-                'rounded-sm border border-[#2A2A30] px-3 py-1.5 text-sm transition-colors',
+                'rounded-sm border border-[#2a2a2a] px-3 py-1.5 text-sm transition-colors',
                 isUsed
-                  ? 'cursor-default border-transparent bg-transparent text-[#2A2A30]'
-                  : 'bg-[#1C1C20] text-[#E8E8EC] hover:border-[#3A3A42]',
+                  ? 'cursor-default border-transparent bg-transparent text-[#2a2a2a]'
+                  : 'bg-[#1e1e1e] text-[#e0e0e0] hover:border-[#3a3a3a]',
               )}
             >
               {word}
@@ -312,16 +312,16 @@ function ExerciseFreeProduction({ exercise, onAnswer, disabled }: ExerciseProps)
 
   return (
     <div className="flex flex-col items-center gap-6 text-center">
-      <p className="text-sm text-[#8B8B96]">Write a sentence using this word</p>
-      <h2 className="font-mono text-4xl font-bold text-[#E8E8EC]">
+      <p className="text-sm text-[#888888]">Write a sentence using this word</p>
+      <h2 className="font-mono text-4xl font-bold text-[#e0e0e0]">
         {exercise.english}
       </h2>
       {exercise.transcription && (
-        <p className="font-mono text-base text-[#5C5C66]">
+        <p className="font-mono text-base text-[#666666]">
           {exercise.transcription}
         </p>
       )}
-      <p className="text-sm text-[#8B8B96]">
+      <p className="text-sm text-[#888888]">
         {exercise.translations.join(', ')}
       </p>
       <div className="mt-2 flex w-full max-w-lg gap-2">
@@ -333,7 +333,7 @@ function ExerciseFreeProduction({ exercise, onAnswer, disabled }: ExerciseProps)
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
           disabled={disabled}
           placeholder="Write a sentence..."
-          className="flex-1 rounded-sm border border-[#2A2A30] bg-[#1C1C20] px-4 py-3 text-sm text-[#E8E8EC] outline-none placeholder:text-[#5C5C66] focus:border-indigo-500"
+          className="flex-1 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3 text-sm text-[#e0e0e0] outline-none placeholder:text-[#666666] focus:border-[#00ff88]"
         />
         <Button onClick={handleSubmit} disabled={disabled || !input.trim()}>
           Submit
@@ -360,13 +360,13 @@ function ExerciseListening({ exercise, onAnswer, disabled }: ExerciseProps) {
 
   return (
     <div className="flex flex-col items-center gap-6 text-center">
-      <p className="text-sm text-[#8B8B96]">Listen and type the word</p>
+      <p className="text-sm text-[#888888]">Listen and type the word</p>
       {exercise.sentence_en && (
-        <div className="max-w-lg rounded-sm border border-[#2A2A30] bg-[#1C1C20] px-5 py-4">
-          <p className="text-base text-[#E8E8EC]">{exercise.sentence_en}</p>
+        <div className="max-w-lg rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-5 py-4">
+          <p className="text-base text-[#e0e0e0]">{exercise.sentence_en}</p>
         </div>
       )}
-      <p className="text-sm text-[#8B8B96]">
+      <p className="text-sm text-[#888888]">
         {exercise.hint}
       </p>
       <div className="mt-2 flex w-full max-w-md gap-2">
@@ -378,7 +378,7 @@ function ExerciseListening({ exercise, onAnswer, disabled }: ExerciseProps) {
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
           disabled={disabled}
           placeholder="Type the word..."
-          className="flex-1 rounded-sm border border-[#2A2A30] bg-[#1C1C20] px-4 py-3 text-sm text-[#E8E8EC] outline-none placeholder:text-[#5C5C66] focus:border-indigo-500"
+          className="flex-1 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3 text-sm text-[#e0e0e0] outline-none placeholder:text-[#666666] focus:border-[#00ff88]"
         />
         <Button onClick={handleSubmit} disabled={disabled || !input.trim()}>
           Check
@@ -425,7 +425,7 @@ function FeedbackOverlay({
       <div
         className={cn(
           'flex items-center gap-2 text-lg font-bold',
-          result.correct ? 'text-emerald-400' : 'text-red-400',
+          result.correct ? 'text-[#00ff88]' : 'text-red-400',
         )}
       >
         {result.correct ? (
@@ -437,16 +437,16 @@ function FeedbackOverlay({
       </div>
 
       {!result.correct && (
-        <p className="text-sm text-[#8B8B96]">
+        <p className="text-sm text-[#888888]">
           Correct answer:{' '}
-          <span className="font-mono text-[#E8E8EC]">
+          <span className="font-mono text-[#e0e0e0]">
             {result.correct_answer}
           </span>
         </p>
       )}
 
       {result.feedback && (
-        <p className="max-w-md text-center text-sm text-[#5C5C66]">
+        <p className="max-w-md text-center text-sm text-[#666666]">
           {result.feedback}
         </p>
       )}
@@ -476,41 +476,41 @@ function SessionSummaryOverlay({
   return (
     <div className="flex min-h-screen items-center justify-center">
       <Card className="w-full max-w-md animate-slide-up text-center">
-        <h2 className="text-2xl font-bold text-[#E8E8EC]">Session Complete</h2>
-        <p className="mt-1 text-sm text-[#8B8B96]">Great work!</p>
+        <h2 className="text-2xl font-bold text-[#e0e0e0]">Session Complete</h2>
+        <p className="mt-1 text-sm text-[#888888]">Great work!</p>
 
         <div className="mt-6 grid grid-cols-2 gap-4">
-          <div className="rounded-sm bg-[#1C1C20] px-3 py-3">
-            <p className="text-xs text-[#8B8B96]">Words</p>
-            <p className="text-xl font-bold text-[#E8E8EC]">
+          <div className="rounded-sm bg-[#1e1e1e] px-3 py-3">
+            <p className="text-xs text-[#888888]">Words</p>
+            <p className="text-xl font-bold text-[#e0e0e0]">
               {summary.total_words}
             </p>
           </div>
-          <div className="rounded-sm bg-[#1C1C20] px-3 py-3">
-            <p className="text-xs text-[#8B8B96]">Accuracy</p>
-            <p className="text-xl font-bold text-[#E8E8EC]">
+          <div className="rounded-sm bg-[#1e1e1e] px-3 py-3">
+            <p className="text-xs text-[#888888]">Accuracy</p>
+            <p className="text-xl font-bold text-[#e0e0e0]">
               {formatPercent(summary.accuracy / 100)}
             </p>
           </div>
-          <div className="rounded-sm bg-[#1C1C20] px-3 py-3">
-            <p className="text-xs text-[#8B8B96]">Correct</p>
-            <p className="text-xl font-bold text-emerald-400">
+          <div className="rounded-sm bg-[#1e1e1e] px-3 py-3">
+            <p className="text-xs text-[#888888]">Correct</p>
+            <p className="text-xl font-bold text-[#00ff88]">
               {summary.correct}
             </p>
           </div>
-          <div className="rounded-sm bg-[#1C1C20] px-3 py-3">
-            <p className="text-xs text-[#8B8B96]">Wrong</p>
+          <div className="rounded-sm bg-[#1e1e1e] px-3 py-3">
+            <p className="text-xs text-[#888888]">Wrong</p>
             <p className="text-xl font-bold text-red-400">{summary.wrong}</p>
           </div>
-          <div className="rounded-sm bg-[#1C1C20] px-3 py-3">
-            <p className="text-xs text-[#8B8B96]">New Learned</p>
-            <p className="text-xl font-bold text-indigo-400">
+          <div className="rounded-sm bg-[#1e1e1e] px-3 py-3">
+            <p className="text-xs text-[#888888]">New Learned</p>
+            <p className="text-xl font-bold text-[#00ff88]">
               {summary.new_words_learned}
             </p>
           </div>
-          <div className="rounded-sm bg-[#1C1C20] px-3 py-3">
-            <p className="text-xs text-[#8B8B96]">Time</p>
-            <p className="text-xl font-bold text-[#E8E8EC]">
+          <div className="rounded-sm bg-[#1e1e1e] px-3 py-3">
+            <p className="text-xs text-[#888888]">Time</p>
+            <p className="text-xl font-bold text-[#e0e0e0]">
               {formatDuration(summary.time_spent_seconds)}
             </p>
           </div>
@@ -665,7 +665,7 @@ export default function Train() {
   // -- Session summary screen -----------------------------------------------
   if (summary) {
     return (
-      <div className="min-h-screen bg-[#0A0A0B] p-6">
+      <div className="min-h-screen bg-[#0a0a0a] p-6">
         <SessionSummaryOverlay summary={summary} onClose={handleExit} />
       </div>
     );
@@ -674,10 +674,10 @@ export default function Train() {
   // -- Loading state --------------------------------------------------------
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0A0A0B]">
+      <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 size={32} className="animate-spin text-indigo-500" />
-          <p className="text-sm text-[#8B8B96]">Preparing exercises...</p>
+          <Loader2 size={32} className="animate-spin text-[#00ff88]" />
+          <p className="text-sm text-[#888888]">Preparing exercises...</p>
         </div>
       </div>
     );
@@ -686,7 +686,7 @@ export default function Train() {
   // -- Error state ----------------------------------------------------------
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0A0A0B]">
+      <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
         <Card className="max-w-sm text-center">
           <p className="text-red-400">{error}</p>
           <Button variant="secondary" onClick={handleExit} className="mt-4">
@@ -700,9 +700,9 @@ export default function Train() {
   // -- No exercises ---------------------------------------------------------
   if (!isActive || exercises.length === 0) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0A0A0B]">
+      <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
         <Card className="max-w-sm text-center">
-          <p className="text-[#8B8B96]">No exercises available right now.</p>
+          <p className="text-[#888888]">No exercises available right now.</p>
           <Button variant="secondary" onClick={handleExit} className="mt-4">
             Back to Dashboard
           </Button>
@@ -717,27 +717,27 @@ export default function Train() {
   const progress = ((currentIndex + 1) / exercises.length) * 100;
 
   return (
-    <div className="min-h-screen bg-[#0A0A0B]">
+    <div className="min-h-screen bg-[#0a0a0a]">
       {/* Top bar: progress + exit */}
-      <div className="sticky top-0 z-10 border-b border-[#2A2A30] bg-[#0A0A0B] px-6 py-4">
+      <div className="sticky top-0 z-10 border-b border-[#2a2a2a] bg-[#0a0a0a] px-6 py-4">
         <div className="mx-auto flex max-w-2xl items-center gap-4">
           {/* Progress bar */}
           <div className="flex-1">
-            <div className="h-2 w-full overflow-hidden rounded-full bg-[#1C1C20]">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-[#1e1e1e]">
               <div
-                className="h-full rounded-full bg-indigo-600 transition-all duration-300"
+                className="h-full rounded-full bg-[#00ff88] transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
             </div>
           </div>
           {/* Counter */}
-          <span className="shrink-0 font-mono text-sm text-[#8B8B96]">
+          <span className="shrink-0 font-mono text-sm text-[#888888]">
             {currentIndex + 1}/{exercises.length}
           </span>
           {/* Exit button */}
           <button
             onClick={handleExit}
-            className="shrink-0 rounded-sm p-1.5 text-[#5C5C66] transition-colors hover:bg-[#1C1C20] hover:text-[#E8E8EC]"
+            className="shrink-0 rounded-sm p-1.5 text-[#666666] transition-colors hover:bg-[#1e1e1e] hover:text-[#e0e0e0]"
           >
             <X size={20} />
           </button>
@@ -754,7 +754,7 @@ export default function Train() {
           />
         ) : (
           <Card className="text-center">
-            <p className="text-[#8B8B96]">
+            <p className="text-[#888888]">
               Unknown exercise type: {currentExercise.exercise_type}
             </p>
             <Button

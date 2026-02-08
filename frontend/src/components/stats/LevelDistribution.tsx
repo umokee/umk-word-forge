@@ -17,9 +17,9 @@ const levelNames: Record<number, string> = {
 };
 
 const levelColors: Record<number, string> = {
-  1: 'bg-indigo-600',
-  2: 'bg-indigo-500',
-  3: 'bg-indigo-400',
+  1: 'bg-[#00ff88]',
+  2: 'bg-[#00ff88]',
+  3: 'bg-[#00ff88]',
   4: 'bg-violet-500',
   5: 'bg-violet-400',
   6: 'bg-purple-500',
@@ -37,10 +37,10 @@ export function LevelDistribution({ distribution, className }: LevelDistribution
 
         return (
           <div key={level} className="flex items-center gap-3">
-            <span className="w-20 text-xs text-[#8B8B96] text-right shrink-0 font-mono">
+            <span className="w-20 text-xs text-[#888888] text-right shrink-0 font-mono">
               {levelNames[level]}
             </span>
-            <div className="flex-1 bg-[#1C1C20] rounded-sm h-5 relative overflow-hidden">
+            <div className="flex-1 bg-[#1e1e1e] rounded-sm h-5 relative overflow-hidden">
               <div
                 className={cn(
                   'h-full rounded-sm transition-all duration-500',
@@ -49,7 +49,7 @@ export function LevelDistribution({ distribution, className }: LevelDistribution
                 style={{ width: `${widthPercent}%` }}
               />
             </div>
-            <span className="w-10 text-xs text-[#E8E8EC] text-right shrink-0 font-mono">
+            <span className="w-10 text-xs text-[#e0e0e0] text-right shrink-0 font-mono">
               {count}
             </span>
           </div>

@@ -24,26 +24,26 @@ export function DailyChart({ data }: DailyChartProps) {
         </defs>
         <XAxis
           dataKey="date"
-          tick={{ fill: '#8B8B96', fontSize: 12 }}
+          tick={{ fill: '#888888', fontSize: 12 }}
           axisLine={false}
           tickLine={false}
         />
         <YAxis
-          tick={{ fill: '#8B8B96', fontSize: 12 }}
+          tick={{ fill: '#888888', fontSize: 12 }}
           axisLine={false}
           tickLine={false}
           allowDecimals={false}
         />
         <Tooltip
           contentStyle={{
-            backgroundColor: '#141416',
-            border: '1px solid #2A2A30',
+            backgroundColor: '#141414',
+            border: '1px solid #2a2a2a',
             borderRadius: '2px',
-            color: '#E8E8EC',
+            color: '#e0e0e0',
             fontSize: 12,
           }}
-          labelStyle={{ color: '#8B8B96' }}
-          cursor={{ stroke: '#2A2A30' }}
+          labelStyle={{ color: '#888888' }}
+          cursor={{ stroke: '#2a2a2a' }}
         />
         <Area
           type="monotone"

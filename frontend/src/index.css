@@ -2,9 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force zero border-radius everywhere */
+* {
+  border-radius: 0 !important;
+}
+
+/* Scrollbar styling */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #2A2A30 #0A0A0B;
+  scrollbar-color: #2a2a2a #0a0a0a;
 }
 
 ::-webkit-scrollbar {
@@ -12,18 +18,64 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #0A0A0B;
+  background: #0a0a0a;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2A2A30;
-  border-radius: 2px;
+  background: #2a2a2a;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3A3A42;
+  background: #3a3a3a;
 }
 
+/* Selection */
 ::selection {
-  background: rgba(99, 102, 241, 0.3);
+  background: rgba(0, 255, 136, 0.3);
+}
+
+/* Base body styling */
+body {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Roboto Mono', monospace;
+  background-color: #0a0a0a;
+  color: #e0e0e0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Terminal-style text */
+.uppercase-label {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.75rem;
+}
+
+/* Accent glow effect */
+.accent-glow {
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+}
+
+/* Active item left border */
+.active-border-left {
+  border-left: 3px solid #00ff88;
+}
+
+/* Widget styling */
+.widget {
+  background: #141414;
+  border: 1px solid #2a2a2a;
+}
+
+.widget-header {
+  background: #1e1e1e;
+  border-bottom: 1px solid #2a2a2a;
+  padding: 0.75rem 1rem;
+}
+
+/* Input focus ring */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #00ff88;
 }

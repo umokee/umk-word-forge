@@ -27,14 +27,14 @@ const MASTERY_LABELS: Record<number, string> = {
 };
 
 const MASTERY_COLORS: Record<number, string> = {
-  0: 'bg-[#2A2A30]',
+  0: 'bg-[#2a2a2a]',
   1: 'bg-red-500',
   2: 'bg-orange-500',
   3: 'bg-amber-500',
   4: 'bg-yellow-400',
   5: 'bg-lime-500',
-  6: 'bg-emerald-500',
-  7: 'bg-indigo-500',
+  6: 'bg-[#00ff88]',
+  7: 'bg-[#00ff88]',
 };
 
 function MasteryDots({ level }: { level: number }) {
@@ -45,7 +45,7 @@ function MasteryDots({ level }: { level: number }) {
           key={l}
           className={cn(
             'h-3 w-3 rounded-full transition-colors',
-            l <= level ? MASTERY_COLORS[l] : 'bg-[#2A2A30]',
+            l <= level ? MASTERY_COLORS[l] : 'bg-[#2a2a2a]',
           )}
           title={MASTERY_LABELS[l]}
         />
@@ -61,10 +61,10 @@ function MasteryDots({ level }: { level: number }) {
 function DetailSkeleton() {
   return (
     <div className="animate-pulse space-y-4">
-      <div className="h-10 w-48 rounded bg-[#1C1C20]" />
-      <div className="h-5 w-32 rounded bg-[#1C1C20]" />
-      <div className="h-4 w-64 rounded bg-[#1C1C20]" />
-      <div className="mt-6 h-48 rounded bg-[#1C1C20]" />
+      <div className="h-10 w-48 rounded bg-[#1e1e1e]" />
+      <div className="h-5 w-32 rounded bg-[#1e1e1e]" />
+      <div className="h-4 w-64 rounded bg-[#1e1e1e]" />
+      <div className="mt-6 h-48 rounded bg-[#1e1e1e]" />
     </div>
   );
 }
@@ -153,7 +153,7 @@ export default function WordDetail() {
       {/* Word header */}
       <div className="mb-6">
         <div className="flex items-center gap-4">
-          <h1 className="font-mono text-4xl font-bold text-[#E8E8EC]">
+          <h1 className="font-mono text-4xl font-bold text-[#e0e0e0]">
             {word.english}
           </h1>
           {word.cefr_level && (
@@ -162,10 +162,10 @@ export default function WordDetail() {
         </div>
 
         {word.transcription && (
-          <p className="mt-2 flex items-center gap-2 font-mono text-lg text-[#5C5C66]">
+          <p className="mt-2 flex items-center gap-2 font-mono text-lg text-[#666666]">
             {word.transcription}
             <button
-              className="rounded-sm p-1 text-[#5C5C66] transition-colors hover:text-indigo-400"
+              className="rounded-sm p-1 text-[#666666] transition-colors hover:text-[#00ff88]"
               title="Listen to pronunciation"
             >
               <Volume2 size={16} />
@@ -185,62 +185,62 @@ export default function WordDetail() {
         <div className="space-y-4">
           {/* Translations */}
           <Card>
-            <h2 className="mb-3 text-sm font-medium text-[#8B8B96]">
+            <h2 className="mb-3 text-sm font-medium text-[#888888]">
               Translations
             </h2>
             <div className="space-y-1.5">
               {word.translations.map((t, i) => (
-                <p key={i} className="text-base text-[#E8E8EC]">
+                <p key={i} className="text-base text-[#e0e0e0]">
                   {t}
                 </p>
               ))}
               {word.translations.length === 0 && (
-                <p className="text-sm text-[#5C5C66]">No translations yet.</p>
+                <p className="text-sm text-[#666666]">No translations yet.</p>
               )}
             </div>
           </Card>
 
           {/* Mastery level */}
           <Card>
-            <h2 className="mb-3 text-sm font-medium text-[#8B8B96]">
+            <h2 className="mb-3 text-sm font-medium text-[#888888]">
               Mastery Level
             </h2>
             <div className="flex items-center gap-4">
               <MasteryDots level={masteryLevel} />
-              <span className="text-sm text-[#E8E8EC]">
+              <span className="text-sm text-[#e0e0e0]">
                 {MASTERY_LABELS[masteryLevel]}
               </span>
             </div>
             {learning && (
               <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="rounded-sm bg-[#1C1C20] px-3 py-2">
-                  <p className="text-xs text-[#5C5C66]">Stability</p>
-                  <p className="font-mono text-sm text-[#E8E8EC]">
+                <div className="rounded-sm bg-[#1e1e1e] px-3 py-2">
+                  <p className="text-xs text-[#666666]">Stability</p>
+                  <p className="font-mono text-sm text-[#e0e0e0]">
                     {learning.fsrs_stability.toFixed(2)}
                   </p>
                 </div>
-                <div className="rounded-sm bg-[#1C1C20] px-3 py-2">
-                  <p className="text-xs text-[#5C5C66]">Difficulty</p>
-                  <p className="font-mono text-sm text-[#E8E8EC]">
+                <div className="rounded-sm bg-[#1e1e1e] px-3 py-2">
+                  <p className="text-xs text-[#666666]">Difficulty</p>
+                  <p className="font-mono text-sm text-[#e0e0e0]">
                     {learning.fsrs_difficulty.toFixed(2)}
                   </p>
                 </div>
-                <div className="rounded-sm bg-[#1C1C20] px-3 py-2">
-                  <p className="text-xs text-[#5C5C66]">Reviews</p>
-                  <p className="font-mono text-sm text-[#E8E8EC]">
+                <div className="rounded-sm bg-[#1e1e1e] px-3 py-2">
+                  <p className="text-xs text-[#666666]">Reviews</p>
+                  <p className="font-mono text-sm text-[#e0e0e0]">
                     {learning.fsrs_reps}
                   </p>
                 </div>
-                <div className="rounded-sm bg-[#1C1C20] px-3 py-2">
-                  <p className="text-xs text-[#5C5C66]">Lapses</p>
-                  <p className="font-mono text-sm text-[#E8E8EC]">
+                <div className="rounded-sm bg-[#1e1e1e] px-3 py-2">
+                  <p className="text-xs text-[#666666]">Lapses</p>
+                  <p className="font-mono text-sm text-[#e0e0e0]">
                     {learning.fsrs_lapses}
                   </p>
                 </div>
               </div>
             )}
             {learning?.next_review_at && (
-              <p className="mt-3 text-xs text-[#5C5C66]">
+              <p className="mt-3 text-xs text-[#666666]">
                 Next review: {formatDate(learning.next_review_at)}
               </p>
             )}
@@ -251,7 +251,7 @@ export default function WordDetail() {
         <div className="space-y-4">
           {/* Context sentences */}
           <Card>
-            <h2 className="mb-3 text-sm font-medium text-[#8B8B96]">
+            <h2 className="mb-3 text-sm font-medium text-[#888888]">
               Context Sentences
             </h2>
             {word.contexts.length > 0 ? (
@@ -259,13 +259,13 @@ export default function WordDetail() {
                 {word.contexts.map((ctx) => (
                   <div
                     key={ctx.id}
-                    className="rounded-sm border border-[#1C1C20] bg-[#0A0A0B] px-4 py-3"
+                    className="rounded-sm border border-[#1e1e1e] bg-[#0a0a0a] px-4 py-3"
                   >
-                    <p className="text-sm text-[#E8E8EC]">
+                    <p className="text-sm text-[#e0e0e0]">
                       {ctx.sentence_en.split(new RegExp(`(${word.english})`, 'gi')).map(
                         (part, i) =>
                           part.toLowerCase() === word.english.toLowerCase() ? (
-                            <span key={i} className="font-bold text-indigo-400">
+                            <span key={i} className="font-bold text-[#00ff88]">
                               {part}
                             </span>
                           ) : (
@@ -274,7 +274,7 @@ export default function WordDetail() {
                       )}
                     </p>
                     {ctx.sentence_ru && (
-                      <p className="mt-1 text-xs text-[#5C5C66]">
+                      <p className="mt-1 text-xs text-[#666666]">
                         {ctx.sentence_ru}
                       </p>
                     )}
@@ -282,7 +282,7 @@ export default function WordDetail() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-[#5C5C66]">
+              <p className="text-sm text-[#666666]">
                 No context sentences available.
               </p>
             )}
@@ -290,36 +290,36 @@ export default function WordDetail() {
 
           {/* Word metadata */}
           <Card>
-            <h2 className="mb-3 text-sm font-medium text-[#8B8B96]">
+            <h2 className="mb-3 text-sm font-medium text-[#888888]">
               Details
             </h2>
             <div className="space-y-2">
               {word.frequency_rank && (
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-[#5C5C66]">Frequency Rank</span>
-                  <span className="font-mono text-sm text-[#E8E8EC]">
+                  <span className="text-xs text-[#666666]">Frequency Rank</span>
+                  <span className="font-mono text-sm text-[#e0e0e0]">
                     #{word.frequency_rank}
                   </span>
                 </div>
               )}
               {word.cefr_level && (
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-[#5C5C66]">CEFR Level</span>
+                  <span className="text-xs text-[#666666]">CEFR Level</span>
                   <Badge variant="accent">{word.cefr_level}</Badge>
                 </div>
               )}
               {word.part_of_speech && (
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-[#5C5C66]">Part of Speech</span>
-                  <span className="text-sm text-[#E8E8EC]">
+                  <span className="text-xs text-[#666666]">Part of Speech</span>
+                  <span className="text-sm text-[#e0e0e0]">
                     {word.part_of_speech}
                   </span>
                 </div>
               )}
               {learning?.created_at && (
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-[#5C5C66]">Added</span>
-                  <span className="text-sm text-[#E8E8EC]">
+                  <span className="text-xs text-[#666666]">Added</span>
+                  <span className="text-sm text-[#e0e0e0]">
                     {formatDate(learning.created_at)}
                   </span>
                 </div>
@@ -330,25 +330,25 @@ export default function WordDetail() {
           {/* Review history */}
           {learning && (
             <Card>
-              <h2 className="mb-3 text-sm font-medium text-[#8B8B96]">
+              <h2 className="mb-3 text-sm font-medium text-[#888888]">
                 Review Summary
               </h2>
               <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-sm bg-[#1C1C20] px-3 py-2 text-center">
-                  <p className="text-xs text-[#5C5C66]">Correct Streak</p>
-                  <p className="font-mono text-lg font-bold text-emerald-400">
+                <div className="rounded-sm bg-[#1e1e1e] px-3 py-2 text-center">
+                  <p className="text-xs text-[#666666]">Correct Streak</p>
+                  <p className="font-mono text-lg font-bold text-[#00ff88]">
                     {learning.consecutive_correct}
                   </p>
                 </div>
-                <div className="rounded-sm bg-[#1C1C20] px-3 py-2 text-center">
-                  <p className="text-xs text-[#5C5C66]">Wrong Streak</p>
+                <div className="rounded-sm bg-[#1e1e1e] px-3 py-2 text-center">
+                  <p className="text-xs text-[#666666]">Wrong Streak</p>
                   <p className="font-mono text-lg font-bold text-red-400">
                     {learning.consecutive_wrong}
                   </p>
                 </div>
-                <div className="rounded-sm bg-[#1C1C20] px-3 py-2 text-center">
-                  <p className="text-xs text-[#5C5C66]">Total Reviews</p>
-                  <p className="font-mono text-lg font-bold text-[#E8E8EC]">
+                <div className="rounded-sm bg-[#1e1e1e] px-3 py-2 text-center">
+                  <p className="text-xs text-[#666666]">Total Reviews</p>
+                  <p className="font-mono text-lg font-bold text-[#e0e0e0]">
                     {learning.fsrs_reps}
                   </p>
                 </div>

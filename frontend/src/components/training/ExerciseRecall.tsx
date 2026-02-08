@@ -117,7 +117,7 @@ export function ExerciseRecall({ exercise, onAnswer }: ExerciseProps) {
     <div className="flex flex-col items-center gap-6 w-full max-w-lg mx-auto animate-fade-in">
       <Card className="w-full flex flex-col items-center gap-4 py-8 px-6">
         {/* Translation prompt */}
-        <h2 className="text-2xl font-bold text-[#E8E8EC] text-center">
+        <h2 className="text-2xl font-bold text-[#e0e0e0] text-center">
           {exercise.translations.join(', ')}
         </h2>
 
@@ -127,7 +127,7 @@ export function ExerciseRecall({ exercise, onAnswer }: ExerciseProps) {
 
         {/* Hint */}
         {hintVisible && (
-          <span className="font-mono text-sm text-[#8B8B96] animate-fade-in">
+          <span className="font-mono text-sm text-[#888888] animate-fade-in">
             Hint: {generateHint()}
           </span>
         )}
@@ -148,9 +148,9 @@ export function ExerciseRecall({ exercise, onAnswer }: ExerciseProps) {
             autoCapitalize="off"
             spellCheck={false}
             className={cn(
-              'w-full bg-[#1C1C20] border rounded-sm px-4 py-3 text-sm font-mono text-[#E8E8EC] placeholder:text-[#5C5C66] outline-none transition-all',
-              !feedback && 'border-[#2A2A30] focus:border-indigo-500',
-              feedback?.type === 'correct' && 'border-emerald-500 bg-emerald-500/5',
+              'w-full bg-[#1e1e1e] border rounded-sm px-4 py-3 text-sm font-mono text-[#e0e0e0] placeholder:text-[#666666] outline-none transition-all',
+              !feedback && 'border-[#2a2a2a] focus:border-[#00ff88]',
+              feedback?.type === 'correct' && 'border-[#00ff88] bg-[#00ff88]/5',
               feedback?.type === 'typo' && 'border-amber-500 bg-amber-500/5',
               feedback?.type === 'wrong' && 'border-red-500 bg-red-500/5'
             )}
@@ -159,7 +159,7 @@ export function ExerciseRecall({ exercise, onAnswer }: ExerciseProps) {
 
         {/* Feedback messages */}
         {feedback?.type === 'correct' && (
-          <p className="text-sm text-emerald-400 text-center animate-fade-in">
+          <p className="text-sm text-[#00ff88] text-center animate-fade-in">
             Correct!
           </p>
         )}
@@ -172,7 +172,7 @@ export function ExerciseRecall({ exercise, onAnswer }: ExerciseProps) {
         {feedback?.type === 'wrong' && (
           <p className="text-sm text-red-400 text-center animate-fade-in">
             Correct answer:{' '}
-            <span className="font-mono font-semibold text-emerald-400">
+            <span className="font-mono font-semibold text-[#00ff88]">
               {feedback.answer}
             </span>
           </p>

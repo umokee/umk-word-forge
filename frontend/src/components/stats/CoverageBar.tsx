@@ -15,27 +15,27 @@ export function CoverageBar({ knownWords, coveragePercent, className }: Coverage
   return (
     <div className={cn('flex flex-col gap-3', className)}>
       <div className="flex items-baseline justify-between">
-        <p className="text-sm text-[#E8E8EC]">
-          You know <span className="font-mono font-semibold text-indigo-400">{knownWords.toLocaleString()}</span> words
+        <p className="text-sm text-[#e0e0e0]">
+          You know <span className="font-mono font-semibold text-[#00ff88]">{knownWords.toLocaleString()}</span> words
         </p>
-        <p className="text-sm text-[#8B8B96]">
-          Cover <span className="font-mono font-semibold text-indigo-400">{clampedPercent}%</span> of speech
+        <p className="text-sm text-[#888888]">
+          Cover <span className="font-mono font-semibold text-[#00ff88]">{clampedPercent}%</span> of speech
         </p>
       </div>
 
       <div className="relative">
         {/* Track */}
-        <div className="bg-[#1C1C20] rounded-sm h-4 w-full relative overflow-hidden">
+        <div className="bg-[#1e1e1e] rounded-sm h-4 w-full relative overflow-hidden">
           {/* Fill */}
           <div
-            className="h-full rounded-sm bg-indigo-500 transition-all duration-500"
+            className="h-full rounded-sm bg-[#00ff88] transition-all duration-500"
             style={{ width: `${clampedPercent}%` }}
           />
         </div>
 
         {/* Percentage label */}
         <div
-          className="absolute -top-6 text-xs font-mono font-semibold text-indigo-400 transition-all duration-500"
+          className="absolute -top-6 text-xs font-mono font-semibold text-[#00ff88] transition-all duration-500"
           style={{ left: `${clampedPercent}%`, transform: 'translateX(-50%)' }}
         >
           {clampedPercent}%
@@ -51,13 +51,13 @@ export function CoverageBar({ knownWords, coveragePercent, className }: Coverage
             <div
               className={cn(
                 'w-0.5 h-4',
-                clampedPercent >= m ? 'bg-indigo-300/40' : 'bg-[#5C5C66]/40'
+                clampedPercent >= m ? 'bg-[#00aa55]/40' : 'bg-[#666666]/40'
               )}
             />
             <span
               className={cn(
                 'mt-1 text-[10px] font-mono',
-                clampedPercent >= m ? 'text-indigo-400' : 'text-[#5C5C66]'
+                clampedPercent >= m ? 'text-[#00ff88]' : 'text-[#666666]'
               )}
             >
               {m}%

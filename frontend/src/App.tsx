@@ -11,7 +11,7 @@ const Settings = lazy(() => import('./pages/Settings'));
 
 function LoadingFallback() {
   return (
-    <div className="flex items-center justify-center h-screen bg-[#0A0A0B]">
+    <div className="flex items-center justify-center h-screen bg-[#0a0a0a]">
       <div className="animate-pulse text-zinc-500 text-sm">Loading...</div>
     </div>
   );

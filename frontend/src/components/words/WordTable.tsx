@@ -17,7 +17,7 @@ const levelBadgeColors: Record<number, string> = {
   4: 'bg-yellow-500/10 text-yellow-400',
   5: 'bg-orange-500/10 text-orange-400',
   6: 'bg-purple-500/10 text-purple-400',
-  7: 'bg-indigo-500/10 text-indigo-400',
+  7: 'bg-[#00ff88]/10 text-[#00ff88]',
 };
 
 const levelNames: Record<number, string> = {
@@ -32,7 +32,7 @@ const levelNames: Record<number, string> = {
 };
 
 const cefrBadgeColors: Record<string, string> = {
-  A1: 'bg-emerald-500/10 text-emerald-400',
+  A1: 'bg-[#00ff88]/10 text-[#00ff88]',
   A2: 'bg-green-500/10 text-green-400',
   B1: 'bg-yellow-500/10 text-yellow-400',
   B2: 'bg-orange-500/10 text-orange-400',
@@ -45,10 +45,10 @@ export function WordTable({ words, onRowClick }: WordTableProps) {
     <Table headers={['Word', 'Translation', 'Level', 'CEFR', 'Freq Rank']}>
       {words.map((word) => (
         <TableRow key={word.id} onClick={() => onRowClick(word.id)}>
-          <TableCell className="font-mono font-medium text-[#E8E8EC]">
+          <TableCell className="font-mono font-medium text-[#e0e0e0]">
             {word.english}
           </TableCell>
-          <TableCell className="text-[#8B8B96]">
+          <TableCell className="text-[#888888]">
             {word.translations.join(', ')}
           </TableCell>
           <TableCell>
@@ -66,16 +66,16 @@ export function WordTable({ words, onRowClick }: WordTableProps) {
               <span
                 className={cn(
                   'rounded-sm px-2 py-0.5 text-xs font-mono inline-flex items-center',
-                  cefrBadgeColors[word.cefr_level] ?? 'bg-[#1C1C20] text-[#8B8B96]'
+                  cefrBadgeColors[word.cefr_level] ?? 'bg-[#1e1e1e] text-[#888888]'
                 )}
               >
                 {word.cefr_level}
               </span>
             ) : (
-              <span className="text-[#5C5C66]">--</span>
+              <span className="text-[#666666]">--</span>
             )}
           </TableCell>
-          <TableCell className="font-mono text-[#8B8B96]">
+          <TableCell className="font-mono text-[#888888]">
             {word.frequency_rank != null ? `#${word.frequency_rank.toLocaleString()}` : '--'}
           </TableCell>
         </TableRow>

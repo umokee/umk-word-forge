@@ -10,9 +10,9 @@ interface HeaderProps {
 export function Header({ title, subtitle, className }: HeaderProps) {
   return (
     <div className={cn('mb-6', className)}>
-      <h1 className="text-2xl font-bold text-[#E8E8EC]">{title}</h1>
+      <h1 className="text-2xl font-bold text-[#e0e0e0]">{title}</h1>
       {subtitle && (
-        <p className="mt-1 text-sm text-[#8B8B96]">{subtitle}</p>
+        <p className="mt-1 text-sm text-[#888888]">{subtitle}</p>
       )}
     </div>
   );

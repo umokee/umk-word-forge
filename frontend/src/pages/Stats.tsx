@@ -36,10 +36,10 @@ function ChartTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-sm border border-[#2A2A30] bg-[#141416] px-3 py-2 text-xs text-[#E8E8EC]">
+    <div className="rounded-sm border border-[#2a2a2a] bg-[#141414] px-3 py-2 text-xs text-[#e0e0e0]">
       <p className="font-medium">{label}</p>
       {payload.map((entry, i) => (
-        <p key={i} className="text-[#8B8B96]">
+        <p key={i} className="text-[#888888]">
           {entry.value}
           {unit ? ` ${unit}` : ''}
         </p>
@@ -53,11 +53,11 @@ function ChartTooltip({
 // ---------------------------------------------------------------------------
 
 const HEATMAP_COLORS = [
-  'bg-[#1C1C20]', // level 0
-  'bg-indigo-900/50', // level 1
-  'bg-indigo-700/60', // level 2
-  'bg-indigo-600/70', // level 3
-  'bg-indigo-500', // level 4
+  'bg-[#1e1e1e]', // level 0
+  '#bg-[#00ff88]900/50', // level 1
+  '#bg-[#00ff88]700/60', // level 2
+  'bg-[#00ff88]/70', // level 3
+  'bg-[#00ff88]', // level 4
 ];
 
 function HeatmapCalendar({
@@ -125,7 +125,7 @@ function HeatmapCalendar({
         ))}
       </div>
       {/* Legend */}
-      <div className="mt-3 flex items-center gap-1 text-xs text-[#5C5C66]">
+      <div className="mt-3 flex items-center gap-1 text-xs text-[#666666]">
         <span>Less</span>
         {HEATMAP_COLORS.map((color, i) => (
           <div
@@ -146,8 +146,8 @@ function HeatmapCalendar({
 function SkeletonCard({ className }: { className?: string }) {
   return (
     <Card className={cn('animate-pulse', className)}>
-      <div className="h-4 w-24 rounded bg-[#1C1C20]" />
-      <div className="mt-3 h-8 w-16 rounded bg-[#1C1C20]" />
+      <div className="h-4 w-24 rounded bg-[#1e1e1e]" />
+      <div className="mt-3 h-8 w-16 rounded bg-[#1e1e1e]" />
     </Card>
   );
 }
@@ -237,12 +237,12 @@ export default function Stats() {
           <>
             <Card>
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-indigo-500/10">
-                  <BookOpen size={20} className="text-indigo-400" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-[#00ff88]/10">
+                  <BookOpen size={20} className="text-[#00ff88]" />
                 </div>
                 <div>
-                  <p className="text-xs text-[#8B8B96]">Total Words</p>
-                  <p className="text-2xl font-bold text-[#E8E8EC]">
+                  <p className="text-xs text-[#888888]">Total Words</p>
+                  <p className="text-2xl font-bold text-[#e0e0e0]">
                     {totalWords}
                   </p>
                 </div>
@@ -251,12 +251,12 @@ export default function Stats() {
 
             <Card>
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-emerald-500/10">
-                  <TrendingUp size={20} className="text-emerald-400" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-[#00ff88]/10">
+                  <TrendingUp size={20} className="text-[#00ff88]" />
                 </div>
                 <div>
-                  <p className="text-xs text-[#8B8B96]">Words Learned</p>
-                  <p className="text-2xl font-bold text-[#E8E8EC]">
+                  <p className="text-xs text-[#888888]">Words Learned</p>
+                  <p className="text-2xl font-bold text-[#e0e0e0]">
                     {wordsLearned}
                   </p>
                 </div>
@@ -269,8 +269,8 @@ export default function Stats() {
                   <BarChart3 size={20} className="text-amber-400" />
                 </div>
                 <div>
-                  <p className="text-xs text-[#8B8B96]">In Progress</p>
-                  <p className="text-2xl font-bold text-[#E8E8EC]">
+                  <p className="text-xs text-[#888888]">In Progress</p>
+                  <p className="text-2xl font-bold text-[#e0e0e0]">
                     {wordsInProgress}
                   </p>
                 </div>
@@ -283,8 +283,8 @@ export default function Stats() {
                   <Target size={20} className="text-rose-400" />
                 </div>
                 <div>
-                  <p className="text-xs text-[#8B8B96]">Avg. Accuracy</p>
-                  <p className="text-2xl font-bold text-[#E8E8EC]">
+                  <p className="text-xs text-[#888888]">Avg. Accuracy</p>
+                  <p className="text-2xl font-bold text-[#e0e0e0]">
                     {formatPercent(avgAccuracy / 100)}
                   </p>
                 </div>
@@ -297,11 +297,11 @@ export default function Stats() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Area chart: words reviewed per day */}
         <Card>
-          <h2 className="mb-4 text-sm font-medium text-[#8B8B96]">
+          <h2 className="mb-4 text-sm font-medium text-[#888888]">
             Words Reviewed (Last 30 Days)
           </h2>
           {dailyLoading ? (
-            <div className="h-52 animate-pulse rounded bg-[#1C1C20]" />
+            <div className="h-52 animate-pulse rounded bg-[#1e1e1e]" />
           ) : (
             <div className="h-52">
               <ResponsiveContainer width="100%" height="100%">
@@ -314,18 +314,18 @@ export default function Stats() {
                   </defs>
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke="#2A2A30"
+                    stroke="#2a2a2a"
                     vertical={false}
                   />
                   <XAxis
                     dataKey="date"
-                    tick={{ fill: '#8B8B96', fontSize: 10 }}
+                    tick={{ fill: '#888888', fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
                     interval="preserveStartEnd"
                   />
                   <YAxis
-                    tick={{ fill: '#8B8B96', fontSize: 10 }}
+                    tick={{ fill: '#888888', fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
                     allowDecimals={false}
@@ -346,28 +346,28 @@ export default function Stats() {
 
         {/* Accuracy by level */}
         <Card>
-          <h2 className="mb-4 text-sm font-medium text-[#8B8B96]">
+          <h2 className="mb-4 text-sm font-medium text-[#888888]">
             Words by Level
           </h2>
           {learningLoading ? (
-            <div className="h-52 animate-pulse rounded bg-[#1C1C20]" />
+            <div className="h-52 animate-pulse rounded bg-[#1e1e1e]" />
           ) : (
             <div className="h-52">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={accuracyByLevel}>
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke="#2A2A30"
+                    stroke="#2a2a2a"
                     vertical={false}
                   />
                   <XAxis
                     dataKey="level"
-                    tick={{ fill: '#8B8B96', fontSize: 10 }}
+                    tick={{ fill: '#888888', fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fill: '#8B8B96', fontSize: 10 }}
+                    tick={{ fill: '#888888', fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
                     allowDecimals={false}
@@ -388,11 +388,11 @@ export default function Stats() {
 
       {/* Heatmap */}
       <Card className="mt-4">
-        <h2 className="mb-4 text-sm font-medium text-[#8B8B96]">
+        <h2 className="mb-4 text-sm font-medium text-[#888888]">
           Activity Calendar
         </h2>
         {heatmapLoading ? (
-          <div className="h-24 animate-pulse rounded bg-[#1C1C20]" />
+          <div className="h-24 animate-pulse rounded bg-[#1e1e1e]" />
         ) : (
           <HeatmapCalendar data={heatmapData ?? []} />
         )}
@@ -402,16 +402,16 @@ export default function Stats() {
       <Card className="mt-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-medium text-[#8B8B96]">
+            <h2 className="text-sm font-medium text-[#888888]">
               Speech Coverage
             </h2>
             {coverage && (
-              <p className="mt-1 text-[#E8E8EC]">
-                <span className="font-mono font-bold text-indigo-400">
+              <p className="mt-1 text-[#e0e0e0]">
+                <span className="font-mono font-bold text-[#00ff88]">
                   {coverage.known_words}
                 </span>{' '}
                 words known —{' '}
-                <span className="font-mono font-bold text-indigo-400">
+                <span className="font-mono font-bold text-[#00ff88]">
                   {formatPercent(coverage.coverage_percent / 100)}
                 </span>{' '}
                 of everyday speech
@@ -420,8 +420,8 @@ export default function Stats() {
           </div>
           {coverage?.next_milestone && (
             <div className="text-right">
-              <p className="text-xs text-[#5C5C66]">Next milestone</p>
-              <p className="font-mono text-sm text-[#8B8B96]">
+              <p className="text-xs text-[#666666]">Next milestone</p>
+              <p className="font-mono text-sm text-[#888888]">
                 {coverage.next_milestone.words_remaining} words to{' '}
                 {coverage.next_milestone.coverage_at_milestone}%
               </p>
@@ -429,9 +429,9 @@ export default function Stats() {
           )}
         </div>
         {coverage && (
-          <div className="mt-3 h-3 w-full overflow-hidden rounded-sm bg-[#1C1C20]">
+          <div className="mt-3 h-3 w-full overflow-hidden rounded-sm bg-[#1e1e1e]">
             <div
-              className="h-full rounded-sm bg-indigo-600 transition-all"
+              className="h-full rounded-sm bg-[#00ff88] transition-all"
               style={{
                 width: `${Math.min(coverage.coverage_percent, 100)}%`,
               }}

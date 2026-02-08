@@ -16,19 +16,19 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Dashboard', path: '/', icon: LayoutDashboard },
-  { label: 'Training', path: '/train', icon: Dumbbell },
-  { label: 'Words', path: '/words', icon: BookOpen },
-  { label: 'Statistics', path: '/stats', icon: BarChart3 },
-  { label: 'Settings', path: '/settings', icon: Settings },
+  { label: 'DASHBOARD', path: '/', icon: LayoutDashboard },
+  { label: 'TRAINING', path: '/train', icon: Dumbbell },
+  { label: 'WORDS', path: '/words', icon: BookOpen },
+  { label: 'STATISTICS', path: '/stats', icon: BarChart3 },
+  { label: 'SETTINGS', path: '/settings', icon: Settings },
 ];
 
 export function Sidebar() {
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-56 flex-col border-r border-[#2A2A30] bg-[#0A0A0B]">
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-56 flex-col border-r border-[#2a2a2a] bg-[#0a0a0a]">
       {/* Logo */}
-      <div className="flex items-center gap-2 border-b border-[#2A2A30] px-5 py-5">
-        <span className="font-mono text-lg font-bold text-[#E8E8EC]">
+      <div className="flex items-center gap-2 border-b border-[#2a2a2a] px-5 py-5">
+        <span className="text-lg font-bold text-[#00ff88] uppercase tracking-wider">
           WordForge
         </span>
       </div>
@@ -42,18 +42,25 @@ export function Sidebar() {
             end={item.path === '/'}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 rounded-sm px-3 py-2 text-sm font-medium transition-colors',
+                'flex items-center gap-3 px-3 py-2 text-xs font-medium transition-colors tracking-wider',
                 isActive
-                  ? 'bg-indigo-600/10 text-indigo-400 border-l-2 border-indigo-500'
-                  : 'text-[#8B8B96] hover:bg-[#1C1C20] hover:text-[#E8E8EC] border-l-2 border-transparent'
+                  ? 'bg-[#00ff88]/5 text-[#00ff88] border-l-3 border-[#00ff88]'
+                  : 'text-[#888888] hover:bg-[#1e1e1e] hover:text-[#e0e0e0] border-l-3 border-transparent'
               )
             }
           >
-            <item.icon size={18} />
+            <item.icon size={16} />
             <span>{item.label}</span>
           </NavLink>
         ))}
       </nav>
+
+      {/* Footer */}
+      <div className="border-t border-[#2a2a2a] px-5 py-4">
+        <p className="text-[10px] text-[#666666] uppercase tracking-wider">
+          v2.0.0
+        </p>
+      </div>
     </aside>
   );
 }

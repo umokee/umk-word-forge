@@ -67,20 +67,20 @@ export function ExerciseListening({ exercise, onAnswer }: ExerciseProps) {
       <Card className="w-full flex flex-col items-center gap-5 py-10 px-6">
         <button
           onClick={handlePlay}
-          className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-indigo-500/40 bg-indigo-500/10 text-indigo-400 transition-all hover:border-indigo-500/60 hover:bg-indigo-500/20 hover:scale-105 active:scale-95"
+          className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#00ff88]/40 bg-[#00ff88]/10 text-[#00ff88] transition-all hover:border-[#00ff88]/60 hover:bg-[#00ff88]/20 hover:scale-105 active:scale-95"
           aria-label="Play audio"
         >
           <Play className="h-8 w-8 ml-1" />
         </button>
 
-        <p className="text-sm text-[#8B8B96]">
+        <p className="text-sm text-[#888888]">
           {hasPlayed ? 'Listen and type the word you heard' : 'Press play to listen'}
         </p>
 
         {hasPlayed && (
           <button
             onClick={handleRepeat}
-            className="flex items-center gap-1.5 text-xs text-[#5C5C66] hover:text-[#8B8B96] transition-colors"
+            className="flex items-center gap-1.5 text-xs text-[#666666] hover:text-[#888888] transition-colors"
           >
             <RotateCcw className="h-3.5 w-3.5" />
             Repeat
@@ -103,25 +103,25 @@ export function ExerciseListening({ exercise, onAnswer }: ExerciseProps) {
             autoCapitalize="off"
             spellCheck={false}
             className={cn(
-              'w-full bg-[#1C1C20] border rounded-sm px-4 py-3 text-sm font-mono text-[#E8E8EC] placeholder:text-[#5C5C66] outline-none transition-all',
-              !feedback && 'border-[#2A2A30] focus:border-indigo-500',
-              feedback === 'correct' && 'border-emerald-500 bg-emerald-500/5',
+              'w-full bg-[#1e1e1e] border rounded-sm px-4 py-3 text-sm font-mono text-[#e0e0e0] placeholder:text-[#666666] outline-none transition-all',
+              !feedback && 'border-[#2a2a2a] focus:border-[#00ff88]',
+              feedback === 'correct' && 'border-[#00ff88] bg-[#00ff88]/5',
               feedback === 'wrong' && 'border-red-500 bg-red-500/5'
             )}
           />
 
           {/* Feedback */}
           {feedback === 'correct' && (
-            <p className="text-sm text-emerald-400 text-center animate-fade-in">
+            <p className="text-sm text-[#00ff88] text-center animate-fade-in">
               Correct!
             </p>
           )}
           {feedback === 'wrong' && (
             <div className="flex flex-col items-center gap-1 animate-fade-in">
               <p className="text-sm text-red-400">Incorrect</p>
-              <p className="text-xs text-[#5C5C66]">
+              <p className="text-xs text-[#666666]">
                 Correct answer:{' '}
-                <span className="font-mono text-emerald-400">{correctAnswer}</span>
+                <span className="font-mono text-[#00ff88]">{correctAnswer}</span>
               </p>
             </div>
           )}

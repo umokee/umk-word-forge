@@ -25,7 +25,7 @@ export function Input({
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
       {label && (
-        <label className="text-sm font-medium text-[#E8E8EC]">{label}</label>
+        <label className="text-sm font-medium text-[#e0e0e0]">{label}</label>
       )}
       <input
         type={type}
@@ -33,12 +33,12 @@ export function Input({
         value={value}
         onChange={onChange}
         className={cn(
-          'bg-[#1C1C20] border border-[#2A2A30] focus:border-indigo-500 text-[#E8E8EC] rounded-sm px-3 py-2 text-sm placeholder:text-[#5C5C66] outline-none transition-colors',
+          'bg-[#1e1e1e] border border-[#2a2a2a] focus:border-[#00ff88] text-[#e0e0e0] rounded-sm px-3 py-2 text-sm placeholder:text-[#666666] outline-none transition-colors',
           error && 'border-red-500 focus:border-red-500'
         )}
       />
       {error && <p className="text-xs text-red-500">{error}</p>}
-      {hint && !error && <p className="text-xs text-[#5C5C66]">{hint}</p>}
+      {hint && !error && <p className="text-xs text-[#666666]">{hint}</p>}
     </div>
   );
 }

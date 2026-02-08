@@ -70,15 +70,15 @@ export function ExerciseFreeProduction({ exercise, onAnswer }: ExerciseProps) {
     <div className="flex flex-col items-center gap-6 w-full max-w-lg mx-auto animate-fade-in">
       {/* Word + translations */}
       <Card className="w-full flex flex-col items-center gap-3 py-6 px-6">
-        <h2 className="text-2xl font-bold font-mono text-[#E8E8EC]">
+        <h2 className="text-2xl font-bold font-mono text-[#e0e0e0]">
           {exercise.english}
         </h2>
-        <p className="text-sm text-[#8B8B96]">
+        <p className="text-sm text-[#888888]">
           {exercise.translations.join(', ')}
         </p>
       </Card>
 
-      <p className="text-sm text-[#8B8B96] text-center">
+      <p className="text-sm text-[#888888] text-center">
         Write your own sentence using this word:
       </p>
 
@@ -92,10 +92,10 @@ export function ExerciseFreeProduction({ exercise, onAnswer }: ExerciseProps) {
         placeholder="Type your sentence here..."
         rows={3}
         className={cn(
-          'w-full bg-[#1C1C20] border border-[#2A2A30] rounded-sm px-4 py-3 text-sm font-mono text-[#E8E8EC] placeholder:text-[#5C5C66] outline-none transition-all resize-none',
-          'focus:border-indigo-500',
+          'w-full bg-[#1e1e1e] border border-[#2a2a2a] rounded-sm px-4 py-3 text-sm font-mono text-[#e0e0e0] placeholder:text-[#666666] outline-none transition-all resize-none',
+          'focus:border-[#00ff88]',
           loading && 'opacity-60',
-          aiFeedback && 'border-[#2A2A30]'
+          aiFeedback && 'border-[#2a2a2a]'
         )}
       />
 
@@ -147,16 +147,16 @@ export function ExerciseFreeProduction({ exercise, onAnswer }: ExerciseProps) {
 
           {/* Feedback text */}
           {aiFeedback.feedback_ru && (
-            <p className="text-sm text-[#8B8B96] leading-relaxed">
+            <p className="text-sm text-[#888888] leading-relaxed">
               {aiFeedback.feedback_ru}
             </p>
           )}
 
           {/* Corrected sentence */}
           {aiFeedback.corrected && (
-            <div className="border-t border-[#2A2A30] pt-3 flex flex-col gap-1">
-              <span className="text-xs text-[#5C5C66]">Suggested correction:</span>
-              <p className="text-sm font-mono text-indigo-400">
+            <div className="border-t border-[#2a2a2a] pt-3 flex flex-col gap-1">
+              <span className="text-xs text-[#666666]">Suggested correction:</span>
+              <p className="text-sm font-mono text-[#00ff88]">
                 {aiFeedback.corrected}
               </p>
             </div>

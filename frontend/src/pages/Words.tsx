@@ -35,13 +35,13 @@ const CEFR_BADGE_VARIANT: Record<string, 'default' | 'success' | 'warning' | 'er
 
 function SkeletonRow() {
   return (
-    <tr className="animate-pulse border-b border-[#1C1C20]">
-      <td className="px-4 py-3"><div className="h-4 w-24 rounded bg-[#1C1C20]" /></td>
-      <td className="px-4 py-3"><div className="h-4 w-32 rounded bg-[#1C1C20]" /></td>
-      <td className="px-4 py-3"><div className="h-4 w-10 rounded bg-[#1C1C20]" /></td>
-      <td className="px-4 py-3"><div className="h-4 w-12 rounded bg-[#1C1C20]" /></td>
-      <td className="px-4 py-3"><div className="h-4 w-20 rounded bg-[#1C1C20]" /></td>
-      <td className="px-4 py-3"><div className="h-4 w-20 rounded bg-[#1C1C20]" /></td>
+    <tr className="animate-pulse border-b border-[#1e1e1e]">
+      <td className="px-4 py-3"><div className="h-4 w-24 rounded bg-[#1e1e1e]" /></td>
+      <td className="px-4 py-3"><div className="h-4 w-32 rounded bg-[#1e1e1e]" /></td>
+      <td className="px-4 py-3"><div className="h-4 w-10 rounded bg-[#1e1e1e]" /></td>
+      <td className="px-4 py-3"><div className="h-4 w-12 rounded bg-[#1e1e1e]" /></td>
+      <td className="px-4 py-3"><div className="h-4 w-20 rounded bg-[#1e1e1e]" /></td>
+      <td className="px-4 py-3"><div className="h-4 w-20 rounded bg-[#1e1e1e]" /></td>
     </tr>
   );
 }
@@ -107,20 +107,20 @@ export default function Words() {
       <div className="relative mb-4">
         <Search
           size={16}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5C5C66]"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666666]"
         />
         <input
           type="text"
           value={search}
           onChange={handleSearch}
           placeholder="Search words..."
-          className="w-full rounded-sm border border-[#2A2A30] bg-[#1C1C20] py-2.5 pl-10 pr-4 text-sm text-[#E8E8EC] outline-none placeholder:text-[#5C5C66] focus:border-indigo-500"
+          className="w-full rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] py-2.5 pl-10 pr-4 text-sm text-[#e0e0e0] outline-none placeholder:text-[#666666] focus:border-[#00ff88]"
         />
       </div>
 
       {/* Filter buttons */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <span className="text-xs text-[#5C5C66]">CEFR:</span>
+        <span className="text-xs text-[#666666]">CEFR:</span>
         {CEFR_LEVELS.map((level) => (
           <button
             key={level}
@@ -131,15 +131,15 @@ export default function Words() {
             className={cn(
               'rounded-sm px-2.5 py-1 text-xs font-mono transition-colors',
               cefrFilter === level
-                ? 'bg-indigo-600 text-white'
-                : 'bg-[#1C1C20] text-[#8B8B96] hover:bg-[#242428]',
+                ? 'bg-[#00ff88] text-white'
+                : 'bg-[#1e1e1e] text-[#888888] hover:bg-[#242428]',
             )}
           >
             {level}
           </button>
         ))}
 
-        <span className="ml-3 text-xs text-[#5C5C66]">Mastery:</span>
+        <span className="ml-3 text-xs text-[#666666]">Mastery:</span>
         {MASTERY_LEVELS.map((level) => (
           <button
             key={level}
@@ -150,8 +150,8 @@ export default function Words() {
             className={cn(
               'rounded-sm px-2.5 py-1 text-xs font-mono transition-colors',
               masteryFilter === level
-                ? 'bg-indigo-600 text-white'
-                : 'bg-[#1C1C20] text-[#8B8B96] hover:bg-[#242428]',
+                ? 'bg-[#00ff88] text-white'
+                : 'bg-[#1e1e1e] text-[#888888] hover:bg-[#242428]',
             )}
           >
             {level}
@@ -164,7 +164,7 @@ export default function Words() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#2A2A30] text-left text-xs text-[#5C5C66]">
+              <tr className="border-b border-[#2a2a2a] text-left text-xs text-[#666666]">
                 <th className="px-4 py-3 font-medium">Word</th>
                 <th className="px-4 py-3 font-medium">Translation</th>
                 <th className="px-4 py-3 font-medium">Level</th>
@@ -184,14 +184,14 @@ export default function Words() {
                       <tr
                         key={word.id}
                         onClick={() => navigate(`/words/${word.id}`)}
-                        className="cursor-pointer border-b border-[#1C1C20] transition-colors hover:bg-[#1C1C20]"
+                        className="cursor-pointer border-b border-[#1e1e1e] transition-colors hover:bg-[#1e1e1e]"
                       >
                         <td className="px-4 py-3">
-                          <span className="font-mono font-medium text-[#E8E8EC]">
+                          <span className="font-mono font-medium text-[#e0e0e0]">
                             {word.english}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-[#8B8B96]">
+                        <td className="px-4 py-3 text-[#888888]">
                           {word.translations.join(', ')}
                         </td>
                         <td className="px-4 py-3">
@@ -201,17 +201,17 @@ export default function Words() {
                             </Badge>
                           )}
                         </td>
-                        <td className="px-4 py-3 font-mono text-xs text-[#8B8B96]">
+                        <td className="px-4 py-3 font-mono text-xs text-[#888888]">
                           {learning
                             ? learning.fsrs_stability.toFixed(1)
                             : '—'}
                         </td>
-                        <td className="px-4 py-3 text-xs text-[#8B8B96]">
+                        <td className="px-4 py-3 text-xs text-[#888888]">
                           {learning?.next_review_at
                             ? formatDate(learning.next_review_at)
                             : '—'}
                         </td>
-                        <td className="px-4 py-3 text-xs text-[#5C5C66]">
+                        <td className="px-4 py-3 text-xs text-[#666666]">
                           {learning?.created_at
                             ? formatDate(learning.created_at)
                             : '—'}
@@ -225,7 +225,7 @@ export default function Words() {
 
         {/* Empty state */}
         {!wordsLoading && (wordsData?.items ?? []).length === 0 && (
-          <div className="px-4 py-12 text-center text-sm text-[#5C5C66]">
+          <div className="px-4 py-12 text-center text-sm text-[#666666]">
             No words found.
           </div>
         )}
@@ -234,7 +234,7 @@ export default function Words() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="mt-4 flex items-center justify-between">
-          <p className="text-xs text-[#5C5C66]">
+          <p className="text-xs text-[#666666]">
             Showing {(page - 1) * PER_PAGE + 1}-
             {Math.min(page * PER_PAGE, wordsData?.total ?? 0)} of{' '}
             {wordsData?.total ?? 0}
@@ -248,7 +248,7 @@ export default function Words() {
             >
               <ChevronLeft size={16} />
             </Button>
-            <span className="font-mono text-sm text-[#8B8B96]">
+            <span className="font-mono text-sm text-[#888888]">
               {page} / {totalPages}
             </span>
             <Button

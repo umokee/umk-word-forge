@@ -28,9 +28,9 @@ function Toggle({
   return (
     <div className="flex items-center justify-between">
       <div>
-        <p className="text-sm font-medium text-[#E8E8EC]">{label}</p>
+        <p className="text-sm font-medium text-[#e0e0e0]">{label}</p>
         {description && (
-          <p className="mt-0.5 text-xs text-[#5C5C66]">{description}</p>
+          <p className="mt-0.5 text-xs text-[#666666]">{description}</p>
         )}
       </div>
       <button
@@ -38,7 +38,7 @@ function Toggle({
         onClick={() => onChange(!checked)}
         className={cn(
           'relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors',
-          checked ? 'bg-indigo-600' : 'bg-[#2A2A30]',
+          checked ? 'bg-[#00ff88]' : 'bg-[#2a2a2a]',
         )}
       >
         <span
@@ -76,8 +76,8 @@ function RangeSlider({
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <label className="text-sm font-medium text-[#E8E8EC]">{label}</label>
-        <span className="font-mono text-sm text-[#8B8B96]">
+        <label className="text-sm font-medium text-[#e0e0e0]">{label}</label>
+        <span className="font-mono text-sm text-[#888888]">
           {formatValue ? formatValue(value) : value}
         </span>
       </div>
@@ -88,9 +88,9 @@ function RangeSlider({
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="h-2 w-full cursor-pointer appearance-none rounded-sm bg-[#2A2A30] accent-indigo-600 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-500"
+        className="h-2 w-full cursor-pointer appearance-none rounded-sm bg-[#2a2a2a] accent-#00ff88 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#00ff88]"
       />
-      <div className="mt-1 flex justify-between text-xs text-[#5C5C66]">
+      <div className="mt-1 flex justify-between text-xs text-[#666666]">
         <span>{min}</span>
         <span>{max}</span>
       </div>
@@ -107,8 +107,8 @@ function SettingsSkeleton() {
     <div className="animate-pulse space-y-6">
       {Array.from({ length: 4 }).map((_, i) => (
         <div key={i} className="space-y-2">
-          <div className="h-4 w-32 rounded bg-[#1C1C20]" />
-          <div className="h-10 w-full rounded bg-[#1C1C20]" />
+          <div className="h-4 w-32 rounded bg-[#1e1e1e]" />
+          <div className="h-10 w-full rounded bg-[#1e1e1e]" />
         </div>
       ))}
     </div>
@@ -220,12 +220,12 @@ export default function Settings() {
       <div className="max-w-2xl space-y-6">
         {/* Learning section */}
         <Card>
-          <h2 className="mb-5 text-base font-semibold text-[#E8E8EC]">
+          <h2 className="mb-5 text-base font-semibold text-[#e0e0e0]">
             Learning
           </h2>
           <div className="space-y-5">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-[#E8E8EC]">
+              <label className="mb-1.5 block text-sm font-medium text-[#e0e0e0]">
                 Daily new words
               </label>
               <input
@@ -236,15 +236,15 @@ export default function Settings() {
                 onChange={(e) =>
                   updateForm('daily_new_words', Number(e.target.value) || 10)
                 }
-                className="w-32 rounded-sm border border-[#2A2A30] bg-[#1C1C20] px-3 py-2 font-mono text-sm text-[#E8E8EC] outline-none focus:border-indigo-500"
+                className="w-32 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-3 py-2 font-mono text-sm text-[#e0e0e0] outline-none focus:border-[#00ff88]"
               />
-              <p className="mt-1 text-xs text-[#5C5C66]">
+              <p className="mt-1 text-xs text-[#666666]">
                 Number of new words to introduce each day (1-50)
               </p>
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-[#E8E8EC]">
+              <label className="mb-1.5 block text-sm font-medium text-[#e0e0e0]">
                 Session duration (minutes)
               </label>
               <input
@@ -258,9 +258,9 @@ export default function Settings() {
                     Number(e.target.value) || 15,
                   )
                 }
-                className="w-32 rounded-sm border border-[#2A2A30] bg-[#1C1C20] px-3 py-2 font-mono text-sm text-[#E8E8EC] outline-none focus:border-indigo-500"
+                className="w-32 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-3 py-2 font-mono text-sm text-[#e0e0e0] outline-none focus:border-[#00ff88]"
               />
-              <p className="mt-1 text-xs text-[#5C5C66]">
+              <p className="mt-1 text-xs text-[#666666]">
                 Target duration for a training session (1-60)
               </p>
             </div>
@@ -269,7 +269,7 @@ export default function Settings() {
 
         {/* Text-to-Speech section */}
         <Card>
-          <h2 className="mb-5 text-base font-semibold text-[#E8E8EC]">
+          <h2 className="mb-5 text-base font-semibold text-[#e0e0e0]">
             Text-to-Speech
           </h2>
           <div className="space-y-5">
@@ -294,7 +294,7 @@ export default function Settings() {
 
         {/* Interface section */}
         <Card>
-          <h2 className="mb-5 text-base font-semibold text-[#E8E8EC]">
+          <h2 className="mb-5 text-base font-semibold text-[#e0e0e0]">
             Interface
           </h2>
           <Toggle
@@ -307,7 +307,7 @@ export default function Settings() {
 
         {/* API keys section */}
         <Card>
-          <h2 className="mb-5 text-base font-semibold text-[#E8E8EC]">
+          <h2 className="mb-5 text-base font-semibold text-[#e0e0e0]">
             AI Provider Keys
           </h2>
           <div className="space-y-4">
@@ -339,7 +339,7 @@ export default function Settings() {
           </Button>
 
           {showSaved && (
-            <span className="flex animate-fade-in items-center gap-1 text-sm text-emerald-400">
+            <span className="flex animate-fade-in items-center gap-1 text-sm text-[#00ff88]">
               <CheckCircle size={16} />
               Saved
             </span>

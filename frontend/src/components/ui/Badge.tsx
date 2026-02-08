@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-type BadgeVariant = 'default' | 'success' | 'error' | 'warning' | 'accent';
+type BadgeVariant = 'default' | 'success' | 'error' | 'warning' | 'accent' | 'active';
 
 interface BadgeProps {
   children: React.ReactNode;
@@ -10,11 +10,12 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  default: 'bg-[#1C1C20] text-[#8B8B96]',
-  success: 'bg-emerald-500/10 text-emerald-400',
-  error: 'bg-red-500/10 text-red-400',
-  warning: 'bg-amber-500/10 text-amber-400',
-  accent: 'bg-indigo-500/10 text-indigo-400',
+  default: 'bg-[#1e1e1e] text-[#888888] border border-[#2a2a2a]',
+  success: 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30',
+  error: 'bg-[#ff4444]/10 text-[#ff4444] border border-[#ff4444]/30',
+  warning: 'bg-[#ffaa00]/10 text-[#ffaa00] border border-[#ffaa00]/30',
+  accent: 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30',
+  active: 'bg-[#00ff88] text-[#0a0a0a] font-semibold',
 };
 
 export function Badge({
@@ -25,7 +26,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        'rounded-sm px-2 py-0.5 text-xs font-mono inline-flex items-center',
+        'px-2 py-0.5 text-xs uppercase tracking-wider inline-flex items-center',
         variantStyles[variant],
         className
       )}

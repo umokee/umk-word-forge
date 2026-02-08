@@ -74,7 +74,7 @@ export function ExerciseSentenceBuilder({ exercise, onAnswer }: ExerciseProps) {
       {/* Russian translation prompt */}
       {exercise.sentence_ru && (
         <Card className="w-full py-6 px-6">
-          <p className="text-base text-[#E8E8EC] text-center leading-relaxed">
+          <p className="text-base text-[#e0e0e0] text-center leading-relaxed">
             {exercise.sentence_ru}
           </p>
         </Card>
@@ -84,13 +84,13 @@ export function ExerciseSentenceBuilder({ exercise, onAnswer }: ExerciseProps) {
       <div
         className={cn(
           'w-full min-h-[72px] rounded-sm border-2 border-dashed p-3 flex flex-wrap gap-2 transition-all duration-200',
-          !feedback && 'border-[#2A2A30] bg-[#141416]',
-          feedback === 'correct' && 'border-emerald-500/60 bg-emerald-500/5',
+          !feedback && 'border-[#2a2a2a] bg-[#141414]',
+          feedback === 'correct' && 'border-[#00ff88]/60 bg-[#00ff88]/5',
           feedback === 'wrong' && 'border-red-500/60 bg-red-500/5 animate-shake'
         )}
       >
         {placed.length === 0 && (
-          <span className="text-sm text-[#5C5C66] m-auto">
+          <span className="text-sm text-[#666666] m-auto">
             Click words below to build the sentence
           </span>
         )}
@@ -102,10 +102,10 @@ export function ExerciseSentenceBuilder({ exercise, onAnswer }: ExerciseProps) {
             className={cn(
               'rounded-sm border px-3 py-1.5 text-sm font-mono transition-all',
               feedback === 'correct'
-                ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                ? 'border-[#00ff88]/40 bg-[#00ff88]/10 text-emerald-300'
                 : feedback === 'wrong'
                   ? 'border-red-500/40 bg-red-500/10 text-red-300'
-                  : 'border-indigo-500/40 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 cursor-pointer'
+                  : 'border-[#00ff88]/40 bg-[#00ff88]/10 text-[#00aa55] hover:bg-[#00ff88]/20 cursor-pointer'
             )}
           >
             {word}
@@ -120,7 +120,7 @@ export function ExerciseSentenceBuilder({ exercise, onAnswer }: ExerciseProps) {
             key={`avail-${i}`}
             onClick={() => handleAddWord(word, i)}
             disabled={feedback !== null}
-            className="rounded-sm border border-[#2A2A30] bg-[#141416] px-3 py-1.5 text-sm font-mono text-[#E8E8EC] transition-all hover:border-[#3A3A42] hover:bg-[#1C1C20] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            className="rounded-sm border border-[#2a2a2a] bg-[#141414] px-3 py-1.5 text-sm font-mono text-[#e0e0e0] transition-all hover:border-[#3a3a3a] hover:bg-[#1e1e1e] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {word}
           </button>
@@ -129,14 +129,14 @@ export function ExerciseSentenceBuilder({ exercise, onAnswer }: ExerciseProps) {
 
       {/* Feedback text */}
       {feedback === 'correct' && (
-        <p className="text-sm text-emerald-400 animate-fade-in">Correct!</p>
+        <p className="text-sm text-[#00ff88] animate-fade-in">Correct!</p>
       )}
       {feedback === 'wrong' && (
         <div className="flex flex-col items-center gap-1 animate-fade-in">
           <p className="text-sm text-red-400">Incorrect order</p>
-          <p className="text-xs text-[#5C5C66]">
+          <p className="text-xs text-[#666666]">
             Correct:{' '}
-            <span className="font-mono text-emerald-400">{correctSentence}</span>
+            <span className="font-mono text-[#00ff88]">{correctSentence}</span>
           </p>
         </div>
       )}

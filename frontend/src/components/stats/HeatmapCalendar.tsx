@@ -13,11 +13,11 @@ interface HeatmapCalendarProps {
 }
 
 const levelColors: Record<number, string> = {
-  0: '#1C1C20',
+  0: '#1e1e1e',
   1: 'rgb(49, 46, 129)',   // indigo-900
   2: 'rgb(67, 56, 202)',   // indigo-700
-  3: 'rgb(99, 102, 241)',  // indigo-500
-  4: 'rgb(129, 140, 248)', // indigo-400
+  3: 'rgb(99, 102, 241)',  // #00ff88
+  4: 'rgb(129, 140, 248)', // #00ff88
 };
 
 const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -81,7 +81,7 @@ export function HeatmapCalendar({ data, className }: HeatmapCalendarProps) {
             key={`${month}-${i}`}
             x={col * (CELL_SIZE + GAP)}
             y={10}
-            fill="#8B8B96"
+            fill="#888888"
             fontSize={10}
             fontFamily="monospace"
           >
@@ -119,7 +119,7 @@ export function HeatmapCalendar({ data, className }: HeatmapCalendarProps) {
       {/* Tooltip */}
       {tooltip && (
         <div
-          className="fixed z-50 bg-[#141416] border border-[#2A2A30] rounded-sm px-2 py-1 text-xs text-[#E8E8EC] pointer-events-none"
+          className="fixed z-50 bg-[#141414] border border-[#2a2a2a] rounded-sm px-2 py-1 text-xs text-[#e0e0e0] pointer-events-none"
           style={{
             left: tooltip.x,
             top: tooltip.y - 32,
@@ -128,7 +128,7 @@ export function HeatmapCalendar({ data, className }: HeatmapCalendarProps) {
         >
           <span className="font-mono">{tooltip.count}</span>{' '}
           {tooltip.count === 1 ? 'word' : 'words'} on{' '}
-          <span className="text-[#8B8B96]">{tooltip.date}</span>
+          <span className="text-[#888888]">{tooltip.date}</span>
         </div>
       )}
     </div>

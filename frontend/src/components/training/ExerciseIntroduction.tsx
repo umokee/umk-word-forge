@@ -24,7 +24,7 @@ export function ExerciseIntroduction({ exercise, onAnswer }: ExerciseProps) {
 
     return parts.map((part, i) =>
       regex.test(part) ? (
-        <span key={i} className="text-indigo-400 font-semibold">
+        <span key={i} className="text-[#00ff88] font-semibold">
           {part}
         </span>
       ) : (
@@ -38,12 +38,12 @@ export function ExerciseIntroduction({ exercise, onAnswer }: ExerciseProps) {
       <Card className="w-full flex flex-col items-center gap-5 py-8 px-6">
         {/* Word */}
         <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold font-mono text-[#E8E8EC]">
+          <h1 className="text-3xl font-bold font-mono text-[#e0e0e0]">
             {exercise.english}
           </h1>
           <button
             onClick={handleSpeak}
-            className="flex h-9 w-9 items-center justify-center rounded-sm text-[#8B8B96] transition-colors hover:bg-[#1C1C20] hover:text-indigo-400"
+            className="flex h-9 w-9 items-center justify-center rounded-sm text-[#888888] transition-colors hover:bg-[#1e1e1e] hover:text-[#00ff88]"
             aria-label="Listen to pronunciation"
           >
             <Volume2 className="h-5 w-5" />
@@ -52,7 +52,7 @@ export function ExerciseIntroduction({ exercise, onAnswer }: ExerciseProps) {
 
         {/* Transcription */}
         {exercise.transcription && (
-          <span className="text-[#8B8B96] font-mono text-sm">
+          <span className="text-[#888888] font-mono text-sm">
             {exercise.transcription}
           </span>
         )}
@@ -68,7 +68,7 @@ export function ExerciseIntroduction({ exercise, onAnswer }: ExerciseProps) {
             <span
               key={i}
               className={cn(
-                'text-[#E8E8EC] text-base',
+                'text-[#e0e0e0] text-base',
                 i < exercise.translations.length - 1 && "after:content-[','] after:ml-0.5"
               )}
             >
@@ -79,12 +79,12 @@ export function ExerciseIntroduction({ exercise, onAnswer }: ExerciseProps) {
 
         {/* Context sentences */}
         {exercise.sentence_en && (
-          <div className="w-full border-t border-[#2A2A30] pt-4 mt-2 flex flex-col gap-1.5">
-            <p className="text-sm text-[#E8E8EC] leading-relaxed">
+          <div className="w-full border-t border-[#2a2a2a] pt-4 mt-2 flex flex-col gap-1.5">
+            <p className="text-sm text-[#e0e0e0] leading-relaxed">
               {highlightWord(exercise.sentence_en, exercise.english)}
             </p>
             {exercise.sentence_ru && (
-              <p className="text-xs text-[#5C5C66] leading-relaxed">
+              <p className="text-xs text-[#666666] leading-relaxed">
                 {exercise.sentence_ru}
               </p>
             )}

@@ -70,8 +70,8 @@ export function ExerciseRecognition({ exercise, onAnswer }: ExerciseProps) {
   return (
     <div className="flex flex-col items-center gap-6 w-full max-w-lg mx-auto animate-fade-in">
       <Card className="w-full flex flex-col items-center gap-4 py-8 px-6">
-        <h2 className="text-2xl font-bold font-mono text-[#E8E8EC]">{prompt}</h2>
-        <p className="text-sm text-[#8B8B96]">Choose the correct translation:</p>
+        <h2 className="text-2xl font-bold font-mono text-[#e0e0e0]">{prompt}</h2>
+        <p className="text-sm text-[#888888]">Choose the correct translation:</p>
       </Card>
 
       <div className="grid grid-cols-2 gap-3 w-full">
@@ -88,12 +88,12 @@ export function ExerciseRecognition({ exercise, onAnswer }: ExerciseProps) {
               onClick={() => handleSelect(option, i)}
               disabled={answeredRef.current}
               className={cn(
-                'relative flex items-center gap-3 rounded-sm border bg-[#141416] px-4 py-3.5 text-left text-sm text-[#E8E8EC] transition-all duration-150',
+                'relative flex items-center gap-3 rounded-sm border bg-[#141414] px-4 py-3.5 text-left text-sm text-[#e0e0e0] transition-all duration-150',
                 !feedback &&
-                  'border-[#2A2A30] hover:border-[#3A3A42] hover:bg-[#1C1C20] cursor-pointer',
-                showCorrect && 'border-emerald-500 bg-emerald-500/5',
+                  'border-[#2a2a2a] hover:border-[#3a3a3a] hover:bg-[#1e1e1e] cursor-pointer',
+                showCorrect && 'border-[#00ff88] bg-[#00ff88]/5',
                 showWrong && 'border-red-500 bg-red-500/5 animate-shake',
-                showHighlight && 'border-emerald-500 bg-emerald-500/5',
+                showHighlight && 'border-[#00ff88] bg-[#00ff88]/5',
                 feedback && !isSelected && !isCorrectOption && 'opacity-40'
               )}
             >
@@ -101,10 +101,10 @@ export function ExerciseRecognition({ exercise, onAnswer }: ExerciseProps) {
                 className={cn(
                   'flex h-6 w-6 shrink-0 items-center justify-center rounded-sm border text-xs font-mono',
                   showCorrect || showHighlight
-                    ? 'border-emerald-500 text-emerald-400'
+                    ? 'border-[#00ff88] text-[#00ff88]'
                     : showWrong
                       ? 'border-red-500 text-red-400'
-                      : 'border-[#2A2A30] text-[#5C5C66]'
+                      : 'border-[#2a2a2a] text-[#666666]'
                 )}
               >
                 {i + 1}

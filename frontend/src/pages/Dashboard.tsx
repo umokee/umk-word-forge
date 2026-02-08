@@ -32,8 +32,8 @@ import { cn, formatPercent } from '@/lib/utils';
 function SkeletonCard({ className }: { className?: string }) {
   return (
     <Card className={cn('animate-pulse', className)}>
-      <div className="h-4 w-24 rounded bg-[#1C1C20]" />
-      <div className="mt-3 h-8 w-16 rounded bg-[#1C1C20]" />
+      <div className="h-4 w-24 rounded bg-[#1e1e1e]" />
+      <div className="mt-3 h-8 w-16 rounded bg-[#1e1e1e]" />
     </Card>
   );
 }
@@ -48,8 +48,8 @@ const LEVEL_COLORS: Record<number, string> = {
   3: 'bg-amber-500',
   4: 'bg-yellow-400',
   5: 'bg-lime-500',
-  6: 'bg-emerald-500',
-  7: 'bg-indigo-500',
+  6: 'bg-[#00ff88]',
+  7: 'bg-[#00ff88]',
 };
 
 const LEVEL_LABELS: Record<number, string> = {
@@ -77,9 +77,9 @@ function ChartTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-sm border border-[#2A2A30] bg-[#141416] px-3 py-2 text-xs text-[#E8E8EC]">
+    <div className="rounded-sm border border-[#2a2a2a] bg-[#141414] px-3 py-2 text-xs text-[#e0e0e0]">
       <p className="font-medium">{label}</p>
-      <p className="text-[#8B8B96]">{payload[0].value} words</p>
+      <p className="text-[#888888]">{payload[0].value} words</p>
     </div>
   );
 }
@@ -151,7 +151,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-2 text-amber-400">
           <Flame size={22} />
           <span className="text-lg font-bold">{data.streak}</span>
-          <span className="text-sm text-[#8B8B96]">day streak</span>
+          <span className="text-sm text-[#888888]">day streak</span>
         </div>
       </div>
 
@@ -159,12 +159,12 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-indigo-500/10">
-              <BookOpen size={20} className="text-indigo-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-[#00ff88]/10">
+              <BookOpen size={20} className="text-[#00ff88]" />
             </div>
             <div>
-              <p className="text-xs text-[#8B8B96]">Words Reviewed</p>
-              <p className="text-2xl font-bold text-[#E8E8EC]">
+              <p className="text-xs text-[#888888]">Words Reviewed</p>
+              <p className="text-2xl font-bold text-[#e0e0e0]">
                 {data.today_reviewed}
               </p>
             </div>
@@ -173,12 +173,12 @@ export default function Dashboard() {
 
         <Card>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-emerald-500/10">
-              <GraduationCap size={20} className="text-emerald-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-[#00ff88]/10">
+              <GraduationCap size={20} className="text-[#00ff88]" />
             </div>
             <div>
-              <p className="text-xs text-[#8B8B96]">New Words Learned</p>
-              <p className="text-2xl font-bold text-[#E8E8EC]">
+              <p className="text-xs text-[#888888]">New Words Learned</p>
+              <p className="text-2xl font-bold text-[#e0e0e0]">
                 {data.today_learned}
               </p>
             </div>
@@ -191,8 +191,8 @@ export default function Dashboard() {
               <Target size={20} className="text-amber-400" />
             </div>
             <div>
-              <p className="text-xs text-[#8B8B96]">Accuracy</p>
-              <p className="text-2xl font-bold text-[#E8E8EC]">
+              <p className="text-xs text-[#888888]">Accuracy</p>
+              <p className="text-2xl font-bold text-[#e0e0e0]">
                 {formatPercent(data.today_accuracy)}
               </p>
             </div>
@@ -225,7 +225,7 @@ export default function Dashboard() {
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Weekly chart */}
         <Card>
-          <h2 className="mb-4 text-sm font-medium text-[#8B8B96]">
+          <h2 className="mb-4 text-sm font-medium text-[#888888]">
             Words This Week
           </h2>
           <div className="h-52">
@@ -233,17 +233,17 @@ export default function Dashboard() {
               <BarChart data={weeklyChartData}>
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  stroke="#2A2A30"
+                  stroke="#2a2a2a"
                   vertical={false}
                 />
                 <XAxis
                   dataKey="day"
-                  tick={{ fill: '#8B8B96', fontSize: 12 }}
+                  tick={{ fill: '#888888', fontSize: 12 }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fill: '#8B8B96', fontSize: 12 }}
+                  tick={{ fill: '#888888', fontSize: 12 }}
                   axisLine={false}
                   tickLine={false}
                   allowDecimals={false}
@@ -265,7 +265,7 @@ export default function Dashboard() {
 
         {/* Level distribution */}
         <Card>
-          <h2 className="mb-4 text-sm font-medium text-[#8B8B96]">
+          <h2 className="mb-4 text-sm font-medium text-[#888888]">
             Level Distribution
           </h2>
           <div className="space-y-2.5">
@@ -275,18 +275,18 @@ export default function Dashboard() {
               const pct = (count / maxLevelCount) * 100;
               return (
                 <div key={level} className="flex items-center gap-3">
-                  <span className="w-20 text-xs text-[#8B8B96]">
+                  <span className="w-20 text-xs text-[#888888]">
                     {LEVEL_LABELS[level]}
                   </span>
                   <div className="flex-1">
-                    <div className="h-4 w-full overflow-hidden rounded-sm bg-[#1C1C20]">
+                    <div className="h-4 w-full overflow-hidden rounded-sm bg-[#1e1e1e]">
                       <div
                         className={cn('h-full transition-all', LEVEL_COLORS[level])}
                         style={{ width: `${Math.max(pct, count > 0 ? 2 : 0)}%` }}
                       />
                     </div>
                   </div>
-                  <span className="w-8 text-right font-mono text-xs text-[#E8E8EC]">
+                  <span className="w-8 text-right font-mono text-xs text-[#e0e0e0]">
                     {count}
                   </span>
                 </div>
@@ -300,25 +300,25 @@ export default function Dashboard() {
       <Card className="mt-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-medium text-[#8B8B96]">
+            <h2 className="text-sm font-medium text-[#888888]">
               Speech Coverage
             </h2>
-            <p className="mt-1 text-[#E8E8EC]">
+            <p className="mt-1 text-[#e0e0e0]">
               You know{' '}
-              <span className="font-mono font-bold text-indigo-400">
+              <span className="font-mono font-bold text-[#00ff88]">
                 {data.total_words_known}
               </span>{' '}
               words — covering{' '}
-              <span className="font-mono font-bold text-indigo-400">
+              <span className="font-mono font-bold text-[#00ff88]">
                 {formatPercent(data.coverage_percent)}
               </span>{' '}
               of speech
             </p>
           </div>
         </div>
-        <div className="mt-3 h-3 w-full overflow-hidden rounded-sm bg-[#1C1C20]">
+        <div className="mt-3 h-3 w-full overflow-hidden rounded-sm bg-[#1e1e1e]">
           <div
-            className="h-full rounded-sm bg-indigo-600 transition-all"
+            className="h-full rounded-sm bg-[#00ff88] transition-all"
             style={{ width: `${Math.min(data.coverage_percent * 100, 100)}%` }}
           />
         </div>
