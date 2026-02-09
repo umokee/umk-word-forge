@@ -5,6 +5,7 @@ import type {
   AnswerSubmit,
   AnswerResult,
   SessionSummary,
+  DailyStatus,
   PhrasalVerbSessionResult,
   PhrasalVerbAnswerSubmit,
   PhrasalVerbAnswerResult,
@@ -15,6 +16,10 @@ import type {
 
 export interface CreateSessionParams {
   duration_minutes?: number;
+}
+
+export function getDailyStatus(): Promise<DailyStatus> {
+  return apiFetch<DailyStatus>('/training/daily-status');
 }
 
 export function createSession(

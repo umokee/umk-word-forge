@@ -26,10 +26,15 @@ from .schemas import (
 # Exercise generation
 # ---------------------------------------------------------------------------
 
+# Sequence of exercise types for new words (multiple exercises per word)
+NEW_WORD_EXERCISE_SEQUENCE = [1, 2, 3, 4]  # Intro, Recognition, Recall, Context
+
+
 def _generate_exercise(
     db: DBSession,
     word_id: int,
     mastery_level: int,
+    force_type: int | None = None,
 ) -> ExerciseResponse:
     """Generate an exercise for a word based on its mastery level."""
     from backend.modules.words.models import Word, WordContext
@@ -45,8 +50,8 @@ def _generate_exercise(
         .first()
     )
 
-    # Determine exercise type based on mastery level (1-7)
-    exercise_type = max(1, min(mastery_level, 7))
+    # Determine exercise type based on mastery level (1-7) or force_type
+    exercise_type = force_type if force_type is not None else max(1, min(mastery_level, 7))
 
     # Parse JSON fields if present
     import json
@@ -77,6 +82,19 @@ def _generate_exercise(
         except:
             pass
 
+    # Check if this is a function word and get rich context data
+    is_function_word = word.word_category in ("function", "preposition")
+    usage_rules = None
+    comparisons = None
+    common_errors = None
+
+    if is_function_word:
+        from .context_service import _get_function_word_data
+        func_data = _get_function_word_data(db, word_id)
+        usage_rules = func_data.get("usage_rules") or None
+        comparisons = func_data.get("comparisons") or None
+        common_errors = func_data.get("common_errors") or None
+
     # Base exercise data
     exercise = ExerciseResponse(
         word_id=word_id,
@@ -91,6 +109,10 @@ def _generate_exercise(
         collocations=collocations,
         phrasal_verbs=phrasal_verbs,
         usage_notes=usage_notes,
+        is_function_word=is_function_word,
+        usage_rules=usage_rules,
+        comparisons=comparisons,
+        common_errors=common_errors,
     )
 
     # Add options for recognition/context exercises (types 2, 4)
@@ -129,6 +151,21 @@ def _generate_exercise(
         random.shuffle(exercise.options)
 
     return exercise
+
+
+def _generate_new_word_exercises(
+    db: DBSession,
+    word_id: int,
+) -> list[ExerciseResponse]:
+    """Generate multiple exercises for a new word (Intro, Recognition, Recall, Context)."""
+    exercises = []
+    for ex_type in NEW_WORD_EXERCISE_SEQUENCE:
+        try:
+            ex = _generate_exercise(db, word_id, mastery_level=1, force_type=ex_type)
+            exercises.append(ex)
+        except Exception:
+            continue
+    return exercises
 
 
 def _get_distractors(
@@ -253,13 +290,10 @@ def create_session(db: DBSession, duration_minutes: int | None = None) -> StartS
         except Exception:
             continue
 
-    # Generate new word exercises (Introduction - level 1)
+    # Generate new word exercises (multiple exercises per new word)
     for word in new_words:
-        try:
-            ex = _generate_exercise(db, word.id, 1)
-            new_exercises.append(ex)
-        except Exception:
-            continue
+        word_exercises = _generate_new_word_exercises(db, word.id)
+        new_exercises.extend(word_exercises)
 
     # Combine based on new_words_position setting
     exercises: list[ExerciseResponse] = []
@@ -272,7 +306,7 @@ def create_session(db: DBSession, duration_minutes: int | None = None) -> StartS
         exercises = review_exercises + new_exercises
 
     words_reviewed = len(review_exercises)
-    words_new = len(new_exercises)
+    words_new = len(new_words)  # Count unique new words, not exercises
 
     # Update session with word counts
     repository.update_session(db, session.id, {

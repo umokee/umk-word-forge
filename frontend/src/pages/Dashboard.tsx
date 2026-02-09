@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -10,6 +10,7 @@ import {
   Clock,
   Layers,
   ArrowLeftRight,
+  CheckCircle,
 } from 'lucide-react';
 import {
   BarChart,
@@ -25,7 +26,9 @@ import { Header } from '@/components/layout/Header';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { getDashboard } from '@/api/stats';
+import { getDailyStatus } from '@/api/training';
 import { cn, formatPercent } from '@/lib/utils';
+import type { DailyStatus, TrainingMode } from '@/types';
 
 // ---------------------------------------------------------------------------
 // Skeleton loader for cards
@@ -92,11 +95,42 @@ function ChartTooltip({
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    mode: TrainingMode | null;
+  }>({ open: false, mode: null });
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['dashboard'],
     queryFn: getDashboard,
   });
+
+  const { data: dailyStatus } = useQuery({
+    queryKey: ['dailyStatus'],
+    queryFn: getDailyStatus,
+  });
+
+  const handleTrainingClick = (mode: TrainingMode) => {
+    const isCompleted =
+      mode === 'words'
+        ? dailyStatus?.words?.exceeded
+        : mode === 'phrasal'
+          ? dailyStatus?.phrasal?.exceeded
+          : dailyStatus?.irregular?.exceeded;
+
+    if (isCompleted) {
+      setConfirmDialog({ open: true, mode });
+    } else {
+      navigate(`/train/${mode}`);
+    }
+  };
+
+  const handleConfirmContinue = () => {
+    if (confirmDialog.mode) {
+      navigate(`/train/${confirmDialog.mode}`);
+    }
+    setConfirmDialog({ open: false, mode: null });
+  };
 
   // -- Loading state -------------------------------------------------------
   if (isLoading) {
@@ -207,9 +241,19 @@ export default function Dashboard() {
         <h2 className="mb-3 text-sm font-medium text-[#888888]">Start Training</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <button
-            onClick={() => navigate('/train/words')}
-            className="group flex items-center gap-4 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] p-4 text-left transition-all hover:border-[#00ff88]/50 hover:bg-[#1e1e1e]"
+            onClick={() => handleTrainingClick('words')}
+            className={cn(
+              'group relative flex items-center gap-4 rounded-sm border bg-[#1e1e1e] p-4 text-left transition-all hover:bg-[#1e1e1e]',
+              dailyStatus?.words?.exceeded
+                ? 'border-[#00ff88]/30 hover:border-[#00ff88]/50'
+                : 'border-[#2a2a2a] hover:border-[#00ff88]/50'
+            )}
           >
+            {dailyStatus?.words?.exceeded && (
+              <div className="absolute right-3 top-3">
+                <CheckCircle size={18} className="text-[#00ff88]" />
+              </div>
+            )}
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm bg-[#00ff88]/10 text-[#00ff88]">
               <BookOpen size={24} />
             </div>
@@ -220,9 +264,19 @@ export default function Dashboard() {
           </button>
 
           <button
-            onClick={() => navigate('/train/phrasal')}
-            className="group flex items-center gap-4 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] p-4 text-left transition-all hover:border-[#00aaff]/50 hover:bg-[#1e1e1e]"
+            onClick={() => handleTrainingClick('phrasal')}
+            className={cn(
+              'group relative flex items-center gap-4 rounded-sm border bg-[#1e1e1e] p-4 text-left transition-all hover:bg-[#1e1e1e]',
+              dailyStatus?.phrasal?.exceeded
+                ? 'border-[#00aaff]/30 hover:border-[#00aaff]/50'
+                : 'border-[#2a2a2a] hover:border-[#00aaff]/50'
+            )}
           >
+            {dailyStatus?.phrasal?.exceeded && (
+              <div className="absolute right-3 top-3">
+                <CheckCircle size={18} className="text-[#00aaff]" />
+              </div>
+            )}
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm bg-[#00aaff]/10 text-[#00aaff]">
               <Layers size={24} />
             </div>
@@ -233,9 +287,19 @@ export default function Dashboard() {
           </button>
 
           <button
-            onClick={() => navigate('/train/irregular')}
-            className="group flex items-center gap-4 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] p-4 text-left transition-all hover:border-[#ff6b6b]/50 hover:bg-[#1e1e1e]"
+            onClick={() => handleTrainingClick('irregular')}
+            className={cn(
+              'group relative flex items-center gap-4 rounded-sm border bg-[#1e1e1e] p-4 text-left transition-all hover:bg-[#1e1e1e]',
+              dailyStatus?.irregular?.exceeded
+                ? 'border-[#ff6b6b]/30 hover:border-[#ff6b6b]/50'
+                : 'border-[#2a2a2a] hover:border-[#ff6b6b]/50'
+            )}
           >
+            {dailyStatus?.irregular?.exceeded && (
+              <div className="absolute right-3 top-3">
+                <CheckCircle size={18} className="text-[#ff6b6b]" />
+              </div>
+            )}
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm bg-[#ff6b6b]/10 text-[#ff6b6b]">
               <ArrowLeftRight size={24} />
             </div>
@@ -246,6 +310,33 @@ export default function Dashboard() {
           </button>
         </div>
       </div>
+
+      {/* Confirm dialog for exceeded daily limit */}
+      {confirmDialog.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="mx-4 w-full max-w-sm rounded-sm border border-[#2a2a2a] bg-[#141414] p-6">
+            <h3 className="mb-2 text-lg font-medium text-[#e0e0e0]">
+              Continue Training?
+            </h3>
+            <p className="mb-6 text-sm text-[#888888]">
+              You have already completed a training session for this category today.
+              Would you like to continue anyway?
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => setConfirmDialog({ open: false, mode: null })}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleConfirmContinue} className="flex-1">
+                Yes, continue
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Charts row */}
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">

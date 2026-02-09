@@ -94,3 +94,50 @@ Return a JSON object with these fields (use null for inapplicable fields):
 
 Focus on practical information that helps Russian speakers use the word correctly.
 Return ONLY the JSON object, no markdown or extra text."""
+
+
+def generate_function_word_prompt(word: str, part_of_speech: str) -> str:
+    """Build a prompt to generate rich context for function words (the, a, to, in, etc.).
+
+    Function words don't have direct translations and require explanation of usage rules.
+    """
+    return f"""You are a linguistic expert creating learning materials for Russian speakers studying English.
+
+The word "{word}" (part of speech: {part_of_speech}) is a FUNCTION WORD that has no direct Russian translation.
+Russian speakers often struggle with these words because they work differently from Russian grammar.
+
+Generate comprehensive learning materials for "{word}".
+
+Return a JSON object with these fields:
+
+1. "usage_rules" (array): 4-6 key rules for when to use "{word}"
+   Each: {{
+     "rule": "Clear rule description in Russian",
+     "example": "English example sentence demonstrating this rule"
+   }}
+   Focus on the most important and common usage patterns.
+
+2. "comparisons" (array): 2-3 comparisons with similar/confusing words
+   Each: {{
+     "vs": "the other word (e.g., 'a/an' if word is 'the')",
+     "difference": "Explanation of the difference in Russian"
+   }}
+   Compare with words that Russian speakers often confuse.
+
+3. "common_errors" (array): 3-4 typical mistakes Russian speakers make
+   Each: {{
+     "wrong": "Incorrect usage example",
+     "correct": "Correct version",
+     "why": "Brief explanation in Russian why this is wrong"
+   }}
+   Focus on errors that come from Russian language interference.
+
+4. "context_examples" (array): 3-5 example sentences showing different contexts
+   Each: {{
+     "en": "English sentence using the word naturally",
+     "ru": "Russian translation (may omit the word if Russian doesn't use it)",
+     "note": "Brief note in Russian about why the word is used here"
+   }}
+
+Make all explanations clear and practical for intermediate (B1) Russian-speaking learners.
+Return ONLY the JSON object, no markdown or extra text."""

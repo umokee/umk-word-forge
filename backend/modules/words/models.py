@@ -44,6 +44,12 @@ class WordContext(Base):
     source = Column(String)
     difficulty = Column(Integer, default=1)
 
+    # Rich context fields for function words
+    context_type = Column(String, default="example")  # "example", "usage_rule", "comparison"
+    usage_explanation = Column(String)  # "Use 'the' for specific items"
+    grammar_pattern = Column(String)    # "the + noun"
+    common_errors = Column(JSON)        # [{"wrong": "...", "correct": "...", "why": "..."}]
+
     word = relationship("Word", back_populates="contexts")
 
     def __repr__(self) -> str:

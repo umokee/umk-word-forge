@@ -147,6 +147,22 @@ export interface PhrasalVerb {
   meaning_ru: string;
 }
 
+export interface UsageRule {
+  rule: string;
+  example: string;
+}
+
+export interface Comparison {
+  vs: string;
+  difference: string;
+}
+
+export interface CommonError {
+  wrong: string;
+  correct: string;
+  why: string;
+}
+
 export interface Exercise {
   word_id: number;
   exercise_type: number;
@@ -166,6 +182,12 @@ export interface Exercise {
   collocations?: Collocation[] | null;
   phrasal_verbs?: PhrasalVerb[] | null;
   usage_notes?: string[] | null;
+
+  // Rich context for function words
+  is_function_word?: boolean;
+  usage_rules?: UsageRule[] | null;
+  comparisons?: Comparison[] | null;
+  common_errors?: CommonError[] | null;
 }
 
 export interface AnswerSubmit {
@@ -198,6 +220,22 @@ export interface StartSessionResult {
   session_id: number;
   exercises: Exercise[];
   total_words: number;
+  daily_limit_warning?: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Daily Status
+// ---------------------------------------------------------------------------
+
+export interface CategoryDailyStatus {
+  completed: number;
+  exceeded: boolean;
+}
+
+export interface DailyStatus {
+  words: CategoryDailyStatus;
+  phrasal: CategoryDailyStatus;
+  irregular: CategoryDailyStatus;
 }
 
 // ---------------------------------------------------------------------------
@@ -415,6 +453,7 @@ export interface PhrasalVerbSessionResult {
   session_id: number;
   exercises: PhrasalVerbExercise[];
   total_items: number;
+  daily_limit_warning?: boolean;
 }
 
 export interface DuePhrasalVerbs {
@@ -516,6 +555,7 @@ export interface IrregularVerbSessionResult {
   session_id: number;
   exercises: IrregularVerbExercise[];
   total_items: number;
+  daily_limit_warning?: boolean;
 }
 
 export interface DueIrregularVerbs {

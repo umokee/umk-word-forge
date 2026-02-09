@@ -135,6 +135,159 @@ async def enrich_word_data(db: DBSession, word_id: int) -> bool:
         return False
 
 
+async def ensure_rich_contexts(db: DBSession, word_id: int) -> dict | None:
+    """Ensure rich contexts for a word, with special handling for function words.
+
+    For function words (the, a, to, in, etc.), generates usage rules, comparisons,
+    and common errors instead of simple contexts.
+
+    Returns a dict with rich context data or None.
+    """
+    word = db.query(Word).filter(Word.id == word_id).first()
+    if not word:
+        return None
+
+    # Check if this is a function word
+    is_function_word = word.word_category in ("function", "preposition")
+
+    if not is_function_word:
+        # Regular word - use standard context generation
+        await ensure_ai_contexts(db, word_id)
+        return None
+
+    # Function word - check if we already have rich contexts
+    existing_rich = (
+        db.query(WordContext)
+        .filter(WordContext.word_id == word_id)
+        .filter(WordContext.context_type == "usage_rule")
+        .first()
+    )
+
+    if existing_rich:
+        # Already have rich contexts, return them
+        return _get_function_word_data(db, word_id)
+
+    # Generate rich contexts for function word
+    api_key = _get_api_key(db)
+    if not api_key:
+        return None
+
+    ai_service.configure(api_key)
+
+    try:
+        from backend.modules.ai.prompts import generate_function_word_prompt
+        prompt = generate_function_word_prompt(word.english, word.part_of_speech or "")
+
+        # Call AI to get function word data
+        response = await ai_service._call_with_fallback(prompt)
+        if not response:
+            return None
+
+        import json
+        data = json.loads(response)
+
+        # Save usage rules as contexts
+        for rule_data in data.get("usage_rules", []):
+            context = WordContext(
+                word_id=word_id,
+                sentence_en=rule_data.get("example", ""),
+                sentence_ru="",
+                source="ai",
+                context_type="usage_rule",
+                usage_explanation=rule_data.get("rule", ""),
+            )
+            db.add(context)
+
+        # Save common errors
+        for error_data in data.get("common_errors", []):
+            context = WordContext(
+                word_id=word_id,
+                sentence_en=error_data.get("correct", ""),
+                sentence_ru="",
+                source="ai",
+                context_type="comparison",
+                common_errors=json.dumps([error_data]),
+            )
+            db.add(context)
+
+        # Save example contexts
+        for ex_data in data.get("context_examples", []):
+            context = WordContext(
+                word_id=word_id,
+                sentence_en=ex_data.get("en", ""),
+                sentence_ru=ex_data.get("ru", ""),
+                source="ai",
+                context_type="example",
+                usage_explanation=ex_data.get("note", ""),
+            )
+            db.add(context)
+
+        # Store comparisons in word grammar_notes
+        if data.get("comparisons"):
+            word.grammar_notes = json.dumps({"comparisons": data["comparisons"]})
+
+        db.commit()
+        logger.info(f"Generated rich contexts for function word '{word.english}'")
+
+        return data
+
+    except Exception as e:
+        logger.warning(f"Failed to generate rich contexts for function word {word_id}: {e}")
+        return None
+
+
+def _get_function_word_data(db: DBSession, word_id: int) -> dict:
+    """Retrieve stored function word data from database."""
+    import json
+
+    word = db.query(Word).filter(Word.id == word_id).first()
+
+    # Get usage rules
+    usage_rules = []
+    rule_contexts = (
+        db.query(WordContext)
+        .filter(WordContext.word_id == word_id)
+        .filter(WordContext.context_type == "usage_rule")
+        .all()
+    )
+    for ctx in rule_contexts:
+        usage_rules.append({
+            "rule": ctx.usage_explanation or "",
+            "example": ctx.sentence_en or "",
+        })
+
+    # Get common errors
+    common_errors = []
+    error_contexts = (
+        db.query(WordContext)
+        .filter(WordContext.word_id == word_id)
+        .filter(WordContext.context_type == "comparison")
+        .all()
+    )
+    for ctx in error_contexts:
+        if ctx.common_errors:
+            try:
+                errors = json.loads(ctx.common_errors) if isinstance(ctx.common_errors, str) else ctx.common_errors
+                common_errors.extend(errors)
+            except:
+                pass
+
+    # Get comparisons from grammar_notes
+    comparisons = []
+    if word and word.grammar_notes:
+        try:
+            notes = json.loads(word.grammar_notes) if isinstance(word.grammar_notes, str) else word.grammar_notes
+            comparisons = notes.get("comparisons", [])
+        except:
+            pass
+
+    return {
+        "usage_rules": usage_rules,
+        "comparisons": comparisons,
+        "common_errors": common_errors,
+    }
+
+
 def get_best_context(db: DBSession, word_id: int) -> WordContext | None:
     """Get the best available context for a word.
 

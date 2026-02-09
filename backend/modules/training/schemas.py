@@ -36,6 +36,7 @@ class StartSessionResponse(BaseModel):
     session_id: int
     exercises: list["ExerciseResponse"]
     total_words: int
+    daily_limit_warning: bool = False  # True if already trained today (soft limit)
 
 
 class SessionProgress(BaseModel):
@@ -69,6 +70,12 @@ class ExerciseResponse(BaseModel):
     phrasal_verbs: list[dict] | None = None
     usage_notes: list[str] | None = None
 
+    # Rich context for function words
+    is_function_word: bool = False
+    usage_rules: list[dict] | None = None  # [{"rule": "...", "example": "..."}]
+    comparisons: list[dict] | None = None  # [{"vs": "a/an", "difference": "..."}]
+    common_errors: list[dict] | None = None  # [{"wrong": "...", "correct": "...", "why": "..."}]
+
 
 # ---------------------------------------------------------------------------
 # Answer DTOs
@@ -88,6 +95,21 @@ class AnswerResult(BaseModel):
     feedback: str | None = None
     mastery_level: int
     level_changed: bool
+
+
+# ---------------------------------------------------------------------------
+# Daily Status DTOs
+# ---------------------------------------------------------------------------
+
+class CategoryDailyStatus(BaseModel):
+    completed: int
+    exceeded: bool
+
+
+class DailyStatusResponse(BaseModel):
+    words: CategoryDailyStatus
+    phrasal: CategoryDailyStatus
+    irregular: CategoryDailyStatus
 
 
 # ---------------------------------------------------------------------------
@@ -147,6 +169,7 @@ class PhrasalVerbSessionResponse(BaseModel):
     session_id: int
     exercises: list[PhrasalVerbExerciseResponse]
     total_items: int
+    daily_limit_warning: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -194,6 +217,7 @@ class IrregularVerbSessionResponse(BaseModel):
     session_id: int
     exercises: list[IrregularVerbExerciseResponse]
     total_items: int
+    daily_limit_warning: bool = False
 
 
 # Rebuild models to resolve forward references

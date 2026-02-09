@@ -39,6 +39,123 @@ function ExerciseIntroduction({ exercise, onAnswer, disabled }: ExerciseProps) {
 
   const verbFormsStr = formatVerbForms();
 
+  // Check if this is a function word with rich contexts
+  const isFunctionWord = exercise.is_function_word &&
+    (exercise.usage_rules?.length || exercise.comparisons?.length || exercise.common_errors?.length);
+
+  // Render function word introduction
+  if (isFunctionWord) {
+    return (
+      <div className="flex flex-col items-center gap-6 text-center">
+        <p className="text-sm text-[#888888]">Служебное слово</p>
+        <div className="flex items-center gap-3">
+          <h2 className="font-mono text-5xl font-bold text-[#e0e0e0]">
+            {exercise.english}
+          </h2>
+          <button
+            onClick={() => speak(exercise.english)}
+            className="flex h-10 w-10 items-center justify-center rounded-sm text-[#888888] transition-colors hover:bg-[#1e1e1e] hover:text-[#00ff88]"
+            aria-label="Озвучить"
+          >
+            <Volume2 size={24} />
+          </button>
+        </div>
+        {exercise.transcription && (
+          <p className="font-mono text-lg text-[#666666]">
+            {exercise.transcription}
+          </p>
+        )}
+        {exercise.part_of_speech && (
+          <Badge variant="accent">{exercise.part_of_speech}</Badge>
+        )}
+
+        {/* Function word note */}
+        <p className="text-sm text-[#f59e0b]">
+          (нет прямого перевода на русский)
+        </p>
+
+        {/* Usage rules */}
+        {exercise.usage_rules && exercise.usage_rules.length > 0 && (
+          <div className="mt-2 w-full max-w-lg text-left">
+            <p className="mb-3 text-sm font-medium text-[#888888]">Когда использовать:</p>
+            <div className="space-y-3">
+              {exercise.usage_rules.slice(0, 4).map((rule, i) => (
+                <div key={i} className="rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3">
+                  <p className="text-sm text-[#e0e0e0]">{rule.rule}</p>
+                  {rule.example && (
+                    <p className="mt-2 font-mono text-xs text-[#00ff88]">
+                      {rule.example}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Comparisons */}
+        {exercise.comparisons && exercise.comparisons.length > 0 && (
+          <div className="mt-2 w-full max-w-lg text-left">
+            <p className="mb-3 text-sm font-medium text-[#888888]">Сравнение:</p>
+            <div className="space-y-2">
+              {exercise.comparisons.slice(0, 3).map((comp, i) => (
+                <div key={i} className="flex items-start gap-3 rounded-sm border border-[#00aaff]/20 bg-[#00aaff]/5 px-4 py-3">
+                  <span className="shrink-0 font-mono text-sm font-medium text-[#00aaff]">
+                    {exercise.english} vs {comp.vs}
+                  </span>
+                  <p className="text-sm text-[#e0e0e0]">{comp.difference}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Common errors */}
+        {exercise.common_errors && exercise.common_errors.length > 0 && (
+          <div className="mt-2 w-full max-w-lg text-left">
+            <p className="mb-3 text-sm font-medium text-[#888888]">Частые ошибки:</p>
+            <div className="space-y-2">
+              {exercise.common_errors.slice(0, 3).map((err, i) => (
+                <div key={i} className="rounded-sm border border-[#f59e0b]/20 bg-[#f59e0b]/5 px-4 py-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-[#f59e0b] line-through">{err.wrong}</span>
+                    <span className="text-[#666666]">→</span>
+                    <span className="text-[#00ff88]">{err.correct}</span>
+                  </div>
+                  {err.why && (
+                    <p className="mt-1.5 text-xs text-[#888888]">{err.why}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Context sentence */}
+        {exercise.sentence_en && (
+          <div className="mt-2 max-w-md rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3">
+            <p className="text-sm text-[#e0e0e0]">{exercise.sentence_en}</p>
+            {exercise.sentence_ru && (
+              <p className="mt-1 text-xs text-[#666666]">
+                {exercise.sentence_ru}
+              </p>
+            )}
+          </div>
+        )}
+
+        <Button
+          size="lg"
+          onClick={() => onAnswer('seen')}
+          disabled={disabled}
+          className="mt-4"
+        >
+          Понял
+        </Button>
+      </div>
+    );
+  }
+
+  // Regular word introduction
   return (
     <div className="flex flex-col items-center gap-6 text-center">
       <p className="text-sm text-[#888888]">Новое слово</p>

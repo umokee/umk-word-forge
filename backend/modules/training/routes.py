@@ -7,10 +7,13 @@ from backend.core.database import get_db
 from . import service
 from . import phrasal_service
 from . import irregular_service
-from .context_service import ensure_ai_contexts, enrich_word_data
+from . import daily_limit_service
+from .context_service import ensure_ai_contexts, enrich_word_data, ensure_rich_contexts
 from .schemas import (
     AnswerResult,
     AnswerSubmit,
+    DailyStatusResponse,
+    CategoryDailyStatus,
     SessionCreate,
     SessionProgress,
     SessionResponse,
@@ -27,18 +30,50 @@ from .schemas import (
 router = APIRouter(prefix="/api/training", tags=["training"])
 
 
+@router.get("/daily-status", response_model=DailyStatusResponse)
+def get_daily_status(
+    db: Session = Depends(get_db),
+) -> DailyStatusResponse:
+    """Get daily training status for all categories."""
+    status = daily_limit_service.get_all_categories_status(db)
+    return DailyStatusResponse(
+        words=CategoryDailyStatus(**status["words"]),
+        phrasal=CategoryDailyStatus(**status["phrasal"]),
+        irregular=CategoryDailyStatus(**status["irregular"]),
+    )
+
+
 @router.post("/session", response_model=StartSessionResponse, status_code=201)
 async def start_session(
     body: SessionCreate | None = None,
     db: Session = Depends(get_db),
 ) -> StartSessionResponse:
     """Start a new training session with exercises."""
+    # Check daily limit (soft - just adds warning)
+    limit_status = daily_limit_service.check_daily_limit(db, "words")
+
     duration = body.duration_minutes if body else 15
     result = service.create_session(db, duration_minutes=duration)
 
+    # Record session start for daily tracking
+    daily_limit_service.record_session_start(db, "words", result.session_id)
+
+    # Add daily limit warning to response
+    result.daily_limit_warning = limit_status["exceeded"]
+
     # Generate AI contexts and enrich words (async)
     for exercise in result.exercises:
-        await ensure_ai_contexts(db, exercise.word_id)
+        # Try rich contexts first (handles function words specially)
+        rich_data = await ensure_rich_contexts(db, exercise.word_id)
+        if rich_data:
+            # Update exercise with function word data
+            exercise.is_function_word = True
+            exercise.usage_rules = rich_data.get("usage_rules")
+            exercise.comparisons = rich_data.get("comparisons")
+            exercise.common_errors = rich_data.get("common_errors")
+        else:
+            # Regular word - use standard context generation
+            await ensure_ai_contexts(db, exercise.word_id)
         await enrich_word_data(db, exercise.word_id)
 
     # Refresh exercises with new contexts
@@ -81,7 +116,12 @@ def end_session(
     db: Session = Depends(get_db),
 ) -> SessionSummary:
     """Finalize the training session and return a summary."""
-    return service.end_session(db, session_id)
+    result = service.end_session(db, session_id)
+
+    # Record session completion for daily tracking
+    daily_limit_service.record_session_complete(db, session_id)
+
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -94,8 +134,19 @@ async def start_phrasal_session(
     db: Session = Depends(get_db),
 ) -> PhrasalVerbSessionResponse:
     """Start a new training session for phrasal verbs."""
+    # Check daily limit (soft - just adds warning)
+    limit_status = daily_limit_service.check_daily_limit(db, "phrasal")
+
     duration = body.duration_minutes if body else 15
-    return phrasal_service.create_phrasal_verb_session(db, duration_minutes=duration)
+    result = phrasal_service.create_phrasal_verb_session(db, duration_minutes=duration)
+
+    # Record session start for daily tracking
+    daily_limit_service.record_session_start(db, "phrasal", result.session_id)
+
+    # Add daily limit warning to response
+    result.daily_limit_warning = limit_status["exceeded"]
+
+    return result
 
 
 @router.post(
@@ -121,8 +172,19 @@ async def start_irregular_session(
     db: Session = Depends(get_db),
 ) -> IrregularVerbSessionResponse:
     """Start a new training session for irregular verbs."""
+    # Check daily limit (soft - just adds warning)
+    limit_status = daily_limit_service.check_daily_limit(db, "irregular")
+
     duration = body.duration_minutes if body else 15
-    return irregular_service.create_irregular_verb_session(db, duration_minutes=duration)
+    result = irregular_service.create_irregular_verb_session(db, duration_minutes=duration)
+
+    # Record session start for daily tracking
+    daily_limit_service.record_session_start(db, "irregular", result.session_id)
+
+    # Add daily limit warning to response
+    result.daily_limit_warning = limit_status["exceeded"]
+
+    return result
 
 
 @router.post(
