@@ -101,7 +101,7 @@ export default function Words() {
 
   return (
     <div>
-      <Header title="Words" subtitle="Browse and manage your vocabulary" />
+      <Header title="СЛОВА" subtitle="Ваш словарный запас" />
 
       {/* Search bar */}
       <div className="relative mb-4">

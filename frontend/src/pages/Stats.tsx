@@ -222,7 +222,7 @@ export default function Stats() {
 
   return (
     <div>
-      <Header title="Statistics" subtitle="Track your learning progress" />
+      <Header title="СТАТИСТИКА" subtitle="Прогресс обучения" />
 
       {/* Summary cards */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

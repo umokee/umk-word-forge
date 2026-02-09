@@ -10,9 +10,11 @@ interface HeaderProps {
 export function Header({ title, subtitle, className }: HeaderProps) {
   return (
     <div className={cn('mb-6', className)}>
-      <h1 className="text-2xl font-bold text-[#e0e0e0]">{title}</h1>
+      <h1 className="text-lg font-bold uppercase tracking-wider text-[#00ff88]">
+        [{title.toUpperCase()}]
+      </h1>
       {subtitle && (
-        <p className="mt-1 text-sm text-[#888888]">{subtitle}</p>
+        <p className="mt-1 text-xs text-[#666666]">{subtitle}</p>
       )}
     </div>
   );

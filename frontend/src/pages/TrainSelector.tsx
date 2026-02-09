@@ -51,35 +51,56 @@ export default function TrainSelector() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
-      {/* Header */}
-      <div className="sticky top-0 z-10 border-b border-[#2a2a2a] bg-[#0a0a0a] px-6 py-4">
-        <div className="mx-auto flex max-w-2xl items-center justify-between">
-          <h1 className="text-lg font-bold text-[#e0e0e0]">Выберите режим</h1>
-          <button
-            onClick={() => navigate('/')}
-            className="shrink-0 rounded-sm p-1.5 text-[#666666] transition-colors hover:bg-[#1e1e1e] hover:text-[#e0e0e0]"
-          >
-            <X size={20} />
-          </button>
+      {/* Top Command Bar */}
+      <div className="sticky top-0 z-50 border-b-2 border-[#2a2a2a] bg-[#141414]">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="shrink-0 border-r border-[#2a2a2a] px-6 py-4">
+              <span className="text-base font-bold uppercase tracking-widest text-[#00ff88]">
+                WORD_FORGE
+              </span>
+            </div>
+            <div className="px-6 py-4">
+              <span className="text-xs font-semibold uppercase tracking-wide text-[#888888]">
+                [ВЫБОР РЕЖИМА]
+              </span>
+            </div>
+          </div>
+          <div className="px-6">
+            <button
+              onClick={() => navigate('/')}
+              className="rounded-sm border border-[#2a2a2a] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[#888888] transition-all hover:border-[#666666] hover:text-[#e0e0e0]"
+            >
+              Назад
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Mode selection */}
-      <div className="mx-auto max-w-2xl px-6 py-12">
+      <div className="mx-auto max-w-3xl px-8 py-12">
         <div className="grid gap-4">
           {TRAINING_MODES.map((mode) => (
             <button
               key={mode.id}
               onClick={() => navigate(mode.path)}
-              className="group relative w-full overflow-hidden rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] p-6 text-left transition-all hover:border-[#3a3a3a] hover:bg-[#252525]"
+              className="group relative w-full overflow-hidden rounded-sm border border-[#2a2a2a] bg-[#141414] text-left transition-all hover:border-[#3a3a3a]"
             >
-              {/* Accent border on hover */}
+              {/* Header */}
               <div
-                className="absolute inset-y-0 left-0 w-1 opacity-0 transition-opacity group-hover:opacity-100"
-                style={{ backgroundColor: mode.color }}
-              />
+                className="border-b px-5 py-3"
+                style={{ borderColor: `${mode.color}20`, backgroundColor: `${mode.color}05` }}
+              >
+                <span
+                  className="text-xs font-bold uppercase tracking-wider"
+                  style={{ color: mode.color }}
+                >
+                  [{mode.title.toUpperCase()}]
+                </span>
+              </div>
 
-              <div className="flex items-start gap-5">
+              {/* Body */}
+              <div className="flex items-start gap-5 p-5">
                 {/* Icon */}
                 <div
                   className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm"
@@ -91,7 +112,7 @@ export default function TrainSelector() {
                 {/* Content */}
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
-                    <h2 className="text-xl font-bold text-[#e0e0e0]">
+                    <h2 className="text-lg font-bold text-[#e0e0e0]">
                       {mode.title}
                     </h2>
                     <span className="rounded-sm bg-[#2a2a2a] px-2 py-0.5 text-xs text-[#888888]">
@@ -122,9 +143,9 @@ export default function TrainSelector() {
         </div>
 
         {/* Quick info */}
-        <div className="mt-8 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e]/50 px-4 py-3">
+        <div className="mt-8 rounded-sm border border-[#2a2a2a] bg-[#141414] px-4 py-3">
           <p className="text-xs text-[#666666]">
-            Каждый режим использует FSRS для оптимального интервального повторения.
+            Алгоритм FSRS рассчитывает оптимальные интервалы повторения для каждого слова.
             Прогресс сохраняется отдельно для каждой категории.
           </p>
         </div>
