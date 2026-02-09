@@ -5,6 +5,7 @@ from backend.core.database import Base
 from backend.modules.words.models import Word, WordContext
 from backend.modules.learning.models import UserWord, Review
 from backend.modules.training.models import TrainingSession
+from backend.modules.training.daily_limit import DailyTrainingSession
 from backend.modules.stats.models import DailyStats
 from backend.modules.settings.models import UserSettings
 
