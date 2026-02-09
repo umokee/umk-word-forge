@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-type BadgeVariant = 'default' | 'success' | 'error' | 'warning' | 'accent' | 'active';
+export type BadgeVariant = 'default' | 'secondary' | 'success' | 'error' | 'warning' | 'accent' | 'active';
 
 interface BadgeProps {
   children: React.ReactNode;
@@ -11,6 +11,7 @@ interface BadgeProps {
 
 const variantStyles: Record<BadgeVariant, string> = {
   default: 'bg-[#1e1e1e] text-[#888888] border border-[#2a2a2a]',
+  secondary: 'bg-[#2a2a2a] text-[#e0e0e0] border border-[#3a3a3a]',
   success: 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30',
   error: 'bg-[#ff4444]/10 text-[#ff4444] border border-[#ff4444]/30',
   warning: 'bg-[#ffaa00]/10 text-[#ffaa00] border border-[#ffaa00]/30',
