@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { X, CheckCircle, XCircle, ArrowRight, Loader2, Volume2 } from 'lucide-react';
+import { X, CheckCircle, XCircle, ArrowRight, Loader2, Volume2, BookOpen, Info } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -11,6 +11,146 @@ import { useKeyboard } from '@/hooks/useKeyboard';
 import { useTTS } from '@/hooks/useTTS';
 import { cn, formatDuration, formatPercent } from '@/lib/utils';
 import type { AnswerResult, Exercise, SessionSummary } from '@/types';
+
+// ---------------------------------------------------------------------------
+// Shared components
+// ---------------------------------------------------------------------------
+
+// Context display component - shows sentence examples when available
+function ContextSentence({ exercise, showAlways = false }: { exercise: Exercise; showAlways?: boolean }) {
+  if (!exercise.sentence_en && !showAlways) return null;
+
+  return (
+    <div className="mt-4 w-full max-w-lg">
+      <div className="flex items-center gap-2 mb-2">
+        <BookOpen size={14} className="text-[#666666]" />
+        <span className="text-xs uppercase tracking-wide text-[#666666]">Пример</span>
+      </div>
+      {exercise.sentence_en ? (
+        <div className="rounded-sm border border-[#2a2a2a] bg-[#141414] px-4 py-3">
+          <p className="text-sm text-[#e0e0e0]">{exercise.sentence_en}</p>
+          {exercise.sentence_ru && (
+            <p className="mt-1.5 text-xs text-[#666666]">{exercise.sentence_ru}</p>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-sm border border-[#2a2a2a] bg-[#141414] px-4 py-3">
+          <p className="text-xs text-[#666666] italic">Примеры будут добавлены</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Word header with audio button and optional transcription
+function WordHeader({
+  word,
+  transcription,
+  partOfSpeech,
+  size = 'lg',
+  onSpeak,
+}: {
+  word: string;
+  transcription?: string | null;
+  partOfSpeech?: string | null;
+  size?: 'sm' | 'md' | 'lg';
+  onSpeak: () => void;
+}) {
+  const sizeClasses = {
+    sm: 'text-2xl',
+    md: 'text-3xl',
+    lg: 'text-4xl',
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <div className="flex items-center gap-3">
+        <h2 className={cn('font-mono font-bold text-[#e0e0e0]', sizeClasses[size])}>
+          {word}
+        </h2>
+        <button
+          onClick={onSpeak}
+          className="flex h-9 w-9 items-center justify-center rounded-sm text-[#666666] transition-colors hover:bg-[#1e1e1e] hover:text-[#00ff88]"
+          aria-label="Озвучить"
+        >
+          <Volume2 size={size === 'lg' ? 22 : 18} />
+        </button>
+      </div>
+      {transcription && (
+        <p className="font-mono text-sm text-[#666666]">{transcription}</p>
+      )}
+      {partOfSpeech && (
+        <Badge variant="secondary" className="mt-1">{partOfSpeech}</Badge>
+      )}
+    </div>
+  );
+}
+
+// Extra word info (collocations, phrasal verbs, usage notes)
+function WordExtras({ exercise }: { exercise: Exercise }) {
+  const hasCollocations = exercise.collocations && exercise.collocations.length > 0;
+  const hasPhrasalVerbs = exercise.phrasal_verbs && exercise.phrasal_verbs.length > 0;
+  const hasUsageNotes = exercise.usage_notes && exercise.usage_notes.length > 0;
+
+  if (!hasCollocations && !hasPhrasalVerbs && !hasUsageNotes) return null;
+
+  return (
+    <div className="mt-4 w-full max-w-lg space-y-4">
+      {/* Collocations */}
+      {hasCollocations && (
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Info size={14} className="text-[#666666]" />
+            <span className="text-xs uppercase tracking-wide text-[#666666]">Словосочетания</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {exercise.collocations!.slice(0, 4).map((col, i) => (
+              <span
+                key={i}
+                className="rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-2.5 py-1 text-xs"
+              >
+                <span className="text-[#e0e0e0]">{col.en}</span>
+                <span className="mx-1 text-[#3a3a3a]">—</span>
+                <span className="text-[#888888]">{col.ru}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Phrasal verbs */}
+      {hasPhrasalVerbs && (
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Info size={14} className="text-[#00ff88]" />
+            <span className="text-xs uppercase tracking-wide text-[#666666]">Фразовые глаголы</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {exercise.phrasal_verbs!.slice(0, 3).map((pv, i) => (
+              <span
+                key={i}
+                className="rounded-sm border border-[#00ff88]/20 bg-[#00ff88]/5 px-2.5 py-1 text-xs"
+              >
+                <span className="font-medium text-[#00ff88]">{pv.phrase}</span>
+                <span className="mx-1 text-[#3a3a3a]">→</span>
+                <span className="text-[#888888]">{pv.meaning_ru}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Usage notes */}
+      {hasUsageNotes && (
+        <div className="rounded-sm border border-[#2a2a2a]/50 bg-[#1a1a1a] px-3 py-2">
+          <p className="text-xs text-[#888888]">
+            {exercise.usage_notes!.slice(0, 2).join(' • ')}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Exercise type components
@@ -289,31 +429,37 @@ function ExerciseRecognition({ exercise, onAnswer, disabled }: ExerciseProps) {
 
   return (
     <div className="flex flex-col items-center gap-6 text-center">
-      <p className="text-sm text-[#888888]">{label}</p>
-      <div className="flex items-center gap-3">
-        <h2 className="font-mono text-4xl font-bold text-[#e0e0e0]">{prompt}</h2>
-        {!exercise.reverse && (
-          <button
-            onClick={() => speak(exercise.english)}
-            className="flex h-9 w-9 items-center justify-center rounded-sm text-[#888888] transition-colors hover:bg-[#1e1e1e] hover:text-[#00ff88]"
-          >
-            <Volume2 size={20} />
-          </button>
-        )}
-      </div>
-      {!exercise.reverse && exercise.transcription && (
-        <p className="font-mono text-base text-[#666666]">
-          {exercise.transcription}
-        </p>
+      <p className="text-xs uppercase tracking-wide text-[#666666]">{label}</p>
+
+      {/* Word display */}
+      {exercise.reverse ? (
+        <h2 className="font-mono text-3xl font-bold text-[#e0e0e0]">{prompt}</h2>
+      ) : (
+        <WordHeader
+          word={exercise.english}
+          transcription={exercise.transcription}
+          partOfSpeech={exercise.part_of_speech}
+          size="md"
+          onSpeak={() => speak(exercise.english)}
+        />
       )}
-      <div className="mt-2 grid w-full max-w-md grid-cols-1 gap-3">
+
+      {/* Context sentence to help answer */}
+      {exercise.sentence_en && !exercise.reverse && (
+        <div className="max-w-md rounded-sm border border-[#2a2a2a]/50 bg-[#141414] px-4 py-2">
+          <p className="text-xs text-[#888888]">{exercise.sentence_en}</p>
+        </div>
+      )}
+
+      {/* Answer options */}
+      <div className="mt-2 grid w-full max-w-md grid-cols-1 gap-2">
         {(exercise.options ?? []).map((option, idx) => (
           <button
             key={idx}
             disabled={disabled}
             onClick={() => onAnswer(option)}
             className={cn(
-              'flex items-center gap-3 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3 text-left text-sm text-[#e0e0e0] transition-colors hover:border-[#00ff88] hover:bg-[#00ff88]/5',
+              'flex items-center gap-3 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3 text-left text-sm text-[#e0e0e0] transition-all hover:border-[#00ff88] hover:bg-[#00ff88]/5',
               disabled && 'pointer-events-none opacity-50',
             )}
           >
@@ -346,23 +492,24 @@ function ExerciseRecall({ exercise, onAnswer, disabled }: ExerciseProps) {
 
   return (
     <div className="flex flex-col items-center gap-6 text-center">
-      <p className="text-sm text-[#888888]">Напишите перевод</p>
-      <div className="flex items-center gap-3">
-        <h2 className="font-mono text-4xl font-bold text-[#e0e0e0]">
-          {exercise.english}
-        </h2>
-        <button
-          onClick={() => speak(exercise.english)}
-          className="flex h-9 w-9 items-center justify-center rounded-sm text-[#888888] transition-colors hover:bg-[#1e1e1e] hover:text-[#00ff88]"
-        >
-          <Volume2 size={20} />
-        </button>
-      </div>
-      {exercise.transcription && (
-        <p className="font-mono text-base text-[#666666]">
-          {exercise.transcription}
-        </p>
+      <p className="text-xs uppercase tracking-wide text-[#666666]">Напишите перевод</p>
+
+      <WordHeader
+        word={exercise.english}
+        transcription={exercise.transcription}
+        partOfSpeech={exercise.part_of_speech}
+        size="md"
+        onSpeak={() => speak(exercise.english)}
+      />
+
+      {/* Context sentence hint */}
+      {exercise.sentence_en && (
+        <div className="max-w-md rounded-sm border border-[#2a2a2a]/50 bg-[#141414] px-4 py-2">
+          <p className="text-xs text-[#888888]">{exercise.sentence_en}</p>
+        </div>
       )}
+
+      {/* Answer input */}
       <div className="mt-2 flex w-full max-w-md gap-2">
         <input
           ref={inputRef}
@@ -375,7 +522,7 @@ function ExerciseRecall({ exercise, onAnswer, disabled }: ExerciseProps) {
           className="flex-1 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3 text-sm text-[#e0e0e0] outline-none placeholder:text-[#666666] focus:border-[#00ff88]"
         />
         <Button onClick={handleSubmit} disabled={disabled || !input.trim()}>
-          Проверить
+          Ответ
         </Button>
       </div>
     </div>
@@ -399,28 +546,44 @@ function ExerciseContext({ exercise, onAnswer, disabled }: ExerciseProps) {
 
   return (
     <div className="flex flex-col items-center gap-6 text-center">
-      <p className="text-sm text-[#888888]">Выберите перевод в контексте</p>
-      {exercise.sentence_en && (
-        <div className="max-w-lg rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-5 py-4">
+      <p className="text-xs uppercase tracking-wide text-[#666666]">Перевод в контексте</p>
+
+      {/* Context sentence - primary element */}
+      {exercise.sentence_en ? (
+        <div className="max-w-lg rounded-sm border border-[#00ff88]/20 bg-[#00ff88]/5 px-5 py-4">
           <p className="text-base text-[#e0e0e0]">{exercise.sentence_en}</p>
           {exercise.sentence_ru && (
-            <p className="mt-1 text-xs text-[#666666]">
-              {exercise.sentence_ru}
-            </p>
+            <p className="mt-2 text-xs text-[#888888]">{exercise.sentence_ru}</p>
           )}
         </div>
+      ) : (
+        <div className="max-w-lg rounded-sm border border-[#2a2a2a] bg-[#141414] px-5 py-4">
+          <p className="text-xs text-[#666666] italic">Контекст недоступен</p>
+        </div>
       )}
-      <h2 className="font-mono text-3xl font-bold text-[#e0e0e0]">
-        {exercise.english}
-      </h2>
-      <div className="mt-2 grid w-full max-w-md grid-cols-1 gap-3">
+
+      {/* Target word */}
+      <div className="flex items-center gap-2">
+        <h2 className="font-mono text-2xl font-bold text-[#00ff88]">
+          {exercise.english}
+        </h2>
+        <button
+          onClick={() => speak(exercise.english)}
+          className="flex h-8 w-8 items-center justify-center rounded-sm text-[#666666] transition-colors hover:bg-[#1e1e1e] hover:text-[#00ff88]"
+        >
+          <Volume2 size={16} />
+        </button>
+      </div>
+
+      {/* Answer options */}
+      <div className="grid w-full max-w-md grid-cols-1 gap-2">
         {(exercise.options ?? []).map((option, idx) => (
           <button
             key={idx}
             disabled={disabled}
             onClick={() => onAnswer(option)}
             className={cn(
-              'flex items-center gap-3 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3 text-left text-sm text-[#e0e0e0] transition-colors hover:border-[#00ff88] hover:bg-[#00ff88]/5',
+              'flex items-center gap-3 rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3 text-left text-sm text-[#e0e0e0] transition-all hover:border-[#00ff88] hover:bg-[#00ff88]/5',
               disabled && 'pointer-events-none opacity-50',
             )}
           >
@@ -661,39 +824,47 @@ function FeedbackOverlay({
 
   return (
     <div className="animate-fade-in mt-8 flex flex-col items-center gap-4">
-      {result.correct ? (
-        // Correct answer - simple green checkmark, no praise
-        <div className="flex items-center gap-2 text-lg font-medium text-[#00ff88]">
-          <CheckCircle size={24} />
-          Верно
-        </div>
-      ) : isTypo ? (
-        // Typo - yellow, counted as correct
-        <div className="flex items-center gap-2 text-lg font-medium text-[#f59e0b]">
-          <CheckCircle size={24} />
-          Верно (опечатка)
-        </div>
-      ) : (
-        // Wrong - neutral gray, NOT red (per spec: high neuroticism consideration)
-        <div className="flex flex-col items-center gap-3">
-          <p className="text-base text-[#888888]">
-            Правильный ответ:
-          </p>
-          <p className="font-mono text-xl text-[#e0e0e0]">
-            {result.correct_answer}
-          </p>
+      {/* Status indicator */}
+      <div className={cn(
+        'flex items-center gap-2 rounded-sm border px-4 py-2',
+        result.correct
+          ? 'border-[#00ff88]/20 bg-[#00ff88]/5 text-[#00ff88]'
+          : isTypo
+            ? 'border-[#f59e0b]/20 bg-[#f59e0b]/5 text-[#f59e0b]'
+            : 'border-[#2a2a2a] bg-[#1e1e1e] text-[#888888]'
+      )}>
+        {result.correct || isTypo ? (
+          <CheckCircle size={20} />
+        ) : (
+          <XCircle size={20} />
+        )}
+        <span className="text-sm font-medium uppercase tracking-wide">
+          {result.correct ? 'Верно' : isTypo ? 'Опечатка' : 'Запомните'}
+        </span>
+      </div>
+
+      {/* Correct answer display */}
+      {!result.correct && (
+        <div className="flex flex-col items-center gap-1">
+          <p className="text-xs uppercase tracking-wide text-[#666666]">Правильный ответ</p>
+          <p className="font-mono text-xl text-[#e0e0e0]">{result.correct_answer}</p>
         </div>
       )}
 
+      {/* Level change indicator */}
       {result.level_changed && (
-        <p className="text-sm text-[#00ff88]">
-          Уровень {result.mastery_level}
-        </p>
+        <div className="rounded-sm border border-[#00ff88]/20 bg-[#00ff88]/5 px-3 py-1.5">
+          <p className="text-xs text-[#00ff88]">
+            Уровень владения: {result.mastery_level}
+          </p>
+        </div>
       )}
 
+      {/* Continue button */}
       <Button onClick={onContinue} className="mt-2 gap-2">
         Далее <ArrowRight size={16} />
       </Button>
+      <p className="text-xs text-[#666666]">или нажмите Enter</p>
     </div>
   );
 }
@@ -710,51 +881,83 @@ function SessionSummaryOverlay({
   onClose: () => void;
 }) {
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Card className="w-full max-w-md animate-slide-up text-center">
-        <h2 className="text-2xl font-bold text-[#e0e0e0]">Сессия завершена</h2>
+    <div className="flex min-h-screen items-center justify-center p-6">
+      <div className="w-full max-w-md animate-slide-up rounded-sm border border-[#2a2a2a] bg-[#141414]">
+        {/* Header */}
+        <div className="border-b border-[#2a2a2a] bg-[#1e1e1e] px-4 py-3">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-[#00ff88]">
+            [СЕССИЯ ЗАВЕРШЕНА]
+          </h2>
+        </div>
 
-        <div className="mt-6 grid grid-cols-2 gap-4">
-          <div className="rounded-sm bg-[#1e1e1e] px-3 py-3">
-            <p className="text-xs text-[#888888]">Упражнений</p>
-            <p className="text-xl font-bold text-[#e0e0e0]">
-              {summary.total_words}
-            </p>
+        {/* Stats */}
+        <div className="p-4 space-y-3">
+          {/* Primary stats */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-3 py-3 text-center">
+              <p className="text-xs uppercase tracking-wide text-[#666666]">Всего</p>
+              <p className="font-mono text-2xl font-bold text-[#e0e0e0]">
+                {summary.total_words}
+              </p>
+            </div>
+            <div className="rounded-sm border border-[#00ff88]/20 bg-[#00ff88]/5 px-3 py-3 text-center">
+              <p className="text-xs uppercase tracking-wide text-[#666666]">Верно</p>
+              <p className="font-mono text-2xl font-bold text-[#00ff88]">
+                {summary.correct}
+              </p>
+            </div>
+            <div className="rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-3 py-3 text-center">
+              <p className="text-xs uppercase tracking-wide text-[#666666]">Ошибок</p>
+              <p className="font-mono text-2xl font-bold text-[#888888]">
+                {summary.wrong}
+              </p>
+            </div>
           </div>
-          <div className="rounded-sm bg-[#1e1e1e] px-3 py-3">
-            <p className="text-xs text-[#888888]">Точность</p>
-            <p className="text-xl font-bold text-[#e0e0e0]">
-              {formatPercent(summary.accuracy / 100)}
-            </p>
+
+          {/* Accuracy bar */}
+          <div className="rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] p-3">
+            <div className="flex items-center justify-between text-xs mb-2">
+              <span className="uppercase tracking-wide text-[#666666]">Точность</span>
+              <span className="font-mono font-bold text-[#e0e0e0]">
+                {formatPercent(summary.accuracy / 100)}
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-[#2a2a2a]">
+              <div
+                className="h-full rounded-full bg-[#00ff88] transition-all"
+                style={{ width: `${Math.min(100, summary.accuracy)}%` }}
+              />
+            </div>
           </div>
-          <div className="rounded-sm bg-[#1e1e1e] px-3 py-3">
-            <p className="text-xs text-[#888888]">Правильно</p>
-            <p className="text-xl font-bold text-[#00ff88]">
-              {summary.correct}
-            </p>
-          </div>
-          <div className="rounded-sm bg-[#1e1e1e] px-3 py-3">
-            <p className="text-xs text-[#888888]">Ошибок</p>
-            <p className="text-xl font-bold text-[#888888]">{summary.wrong}</p>
-          </div>
-          <div className="rounded-sm bg-[#1e1e1e] px-3 py-3">
-            <p className="text-xs text-[#888888]">Изучено слов</p>
-            <p className="text-xl font-bold text-[#00ff88]">
-              {summary.new_words_learned}
-            </p>
-          </div>
-          <div className="rounded-sm bg-[#1e1e1e] px-3 py-3">
-            <p className="text-xs text-[#888888]">Время</p>
-            <p className="text-xl font-bold text-[#e0e0e0]">
-              {formatDuration(summary.time_spent_seconds)}
-            </p>
+
+          {/* Secondary stats */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-3 py-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs uppercase tracking-wide text-[#666666]">Изучено</span>
+                <span className="font-mono text-lg font-bold text-[#00ff88]">
+                  {summary.new_words_learned}
+                </span>
+              </div>
+            </div>
+            <div className="rounded-sm border border-[#2a2a2a] bg-[#1e1e1e] px-3 py-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs uppercase tracking-wide text-[#666666]">Время</span>
+                <span className="font-mono text-lg font-bold text-[#e0e0e0]">
+                  {formatDuration(summary.time_spent_seconds)}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <Button size="lg" onClick={onClose} className="mt-6 w-full">
-          На главную
-        </Button>
-      </Card>
+        {/* Action */}
+        <div className="border-t border-[#2a2a2a] p-4">
+          <Button size="lg" onClick={onClose} className="w-full">
+            На главную
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
