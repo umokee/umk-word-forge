@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session as DBSession
 from sqlalchemy.sql.expression import func
 
-from backend.shared.text_utils import normalize_text, levenshtein_distance
+from backend.shared.text_utils import normalize_text, levenshtein_distance, get_translations
 
 from . import repository
 from .exceptions import SessionAlreadyEndedError
@@ -54,7 +54,7 @@ def _generate_irregular_verb_exercise(
         base_form=iv.base_form,
         past_simple=iv.past_simple,
         past_participle=iv.past_participle,
-        translations=iv.translations or [],
+        translations=get_translations(iv),
         verb_pattern=iv.verb_pattern or "",
         transcription_base=iv.transcription_base,
         transcription_past=iv.transcription_past,

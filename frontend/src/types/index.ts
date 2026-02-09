@@ -216,10 +216,23 @@ export interface SessionSummary {
   level_ups: number;
 }
 
+export interface ExercisePhase {
+  phase_type: 'review' | 'new';
+  exercise_type: number;
+  name: string;
+  name_ru: string;
+  exercises: Exercise[];
+  count: number;
+}
+
 export interface StartSessionResult {
   session_id: number;
   exercises: Exercise[];
+  phases: ExercisePhase[];
   total_words: number;
+  total_exercises: number;
+  review_words_count: number;
+  new_words_count: number;
   daily_limit_warning?: boolean;
 }
 

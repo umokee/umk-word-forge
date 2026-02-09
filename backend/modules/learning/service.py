@@ -82,8 +82,15 @@ class LearningService:
     # Public API
     # ------------------------------------------------------------------
 
-    def initialize_word(self, db: Session, word_id: int) -> UserWord:
-        """Add a word to the learning list and initialize its FSRS card."""
+    def initialize_word(self, db: Session, word_id: int, initial_mastery: int = 1) -> UserWord:
+        """Add a word to the learning list and initialize its FSRS card.
+
+        Args:
+            db: Database session
+            word_id: ID of the word to initialize
+            initial_mastery: Starting mastery level (default=1 for Introduction,
+                           use 2 to skip Introduction for words that passed training)
+        """
         existing = self._repo.get_user_word(db, word_id)
         if existing:
             raise WordAlreadyInLearningError(word_id)
@@ -100,7 +107,7 @@ class LearningService:
         user_word = self._repo.create_user_word(
             db,
             word_id=word_id,
-            mastery_level=1,
+            mastery_level=initial_mastery,
             fsrs_stability=card.stability or 0,
             fsrs_difficulty=card.difficulty or 0,
             fsrs_state=0,  # New

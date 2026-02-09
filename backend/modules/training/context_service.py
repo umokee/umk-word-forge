@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session as DBSession
 
 from backend.modules.words.models import Word, WordContext
 from backend.modules.ai.service import ai_service
+from backend.shared.text_utils import get_translations
 from backend.modules.settings.repository import get_settings
 from backend.core.config import settings as env_settings
 
@@ -56,7 +57,7 @@ async def ensure_ai_contexts(db: DBSession, word_id: int) -> list[WordContext]:
         result = await ai_service.generate_contexts(
             word=word.english,
             part_of_speech=word.part_of_speech or "noun",
-            translations=word.translations or [],
+            translations=get_translations(word),
             count=3,
             difficulty=difficulty,
         )
@@ -116,7 +117,7 @@ async def enrich_word_data(db: DBSession, word_id: int) -> bool:
         result = await ai_service.enrich_word(
             word=word.english,
             part_of_speech=word.part_of_speech or "noun",
-            translations=word.translations or [],
+            translations=get_translations(word),
         )
 
         # Save to database

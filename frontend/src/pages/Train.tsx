@@ -655,40 +655,40 @@ function FeedbackOverlay({
     true,
   );
 
-  // Softer feedback messages for neuroticism consideration
-  const feedbackMessage = result.correct
-    ? 'Отлично'
-    : result.rating >= 3
-      ? 'Почти! Небольшая опечатка'
-      : 'Не совсем';
+  // Neutral feedback per TRAINING-SPEC.md (no "Отлично!", "Супер!", "Молодец!")
+  // Correct: green, Typo: yellow, Wrong: neutral gray (NOT red)
+  const isTypo = !result.correct && result.rating >= 3;
 
   return (
     <div className="animate-fade-in mt-8 flex flex-col items-center gap-4">
-      <div
-        className={cn(
-          'flex items-center gap-2 text-lg font-bold',
-          result.correct ? 'text-[#00ff88]' : 'text-[#f59e0b]',
-        )}
-      >
-        {result.correct ? (
+      {result.correct ? (
+        // Correct answer - simple green checkmark, no praise
+        <div className="flex items-center gap-2 text-lg font-medium text-[#00ff88]">
           <CheckCircle size={24} />
-        ) : (
-          <XCircle size={24} />
-        )}
-        {feedbackMessage}
-      </div>
-
-      {!result.correct && (
-        <p className="text-sm text-[#888888]">
-          Правильный ответ:{' '}
-          <span className="font-mono text-[#e0e0e0]">
+          Верно
+        </div>
+      ) : isTypo ? (
+        // Typo - yellow, counted as correct
+        <div className="flex items-center gap-2 text-lg font-medium text-[#f59e0b]">
+          <CheckCircle size={24} />
+          Верно (опечатка)
+        </div>
+      ) : (
+        // Wrong - neutral gray, NOT red (per spec: high neuroticism consideration)
+        <div className="flex flex-col items-center gap-3">
+          <p className="text-base text-[#888888]">
+            Правильный ответ:
+          </p>
+          <p className="font-mono text-xl text-[#e0e0e0]">
             {result.correct_answer}
-          </span>
-        </p>
+          </p>
+        </div>
       )}
 
       {result.level_changed && (
-        <Badge variant="success">Уровень +1! Mastery: {result.mastery_level}</Badge>
+        <p className="text-sm text-[#00ff88]">
+          Уровень {result.mastery_level}
+        </p>
       )}
 
       <Button onClick={onContinue} className="mt-2 gap-2">
@@ -713,17 +713,10 @@ function SessionSummaryOverlay({
     <div className="flex min-h-screen items-center justify-center">
       <Card className="w-full max-w-md animate-slide-up text-center">
         <h2 className="text-2xl font-bold text-[#e0e0e0]">Сессия завершена</h2>
-        <p className="mt-1 text-sm text-[#888888]">
-          {summary.accuracy >= 80
-            ? 'Отличный результат'
-            : summary.accuracy >= 60
-              ? 'Хороший прогресс'
-              : 'Практика делает мастера'}
-        </p>
 
         <div className="mt-6 grid grid-cols-2 gap-4">
           <div className="rounded-sm bg-[#1e1e1e] px-3 py-3">
-            <p className="text-xs text-[#888888]">Слов</p>
+            <p className="text-xs text-[#888888]">Упражнений</p>
             <p className="text-xl font-bold text-[#e0e0e0]">
               {summary.total_words}
             </p>
@@ -742,10 +735,10 @@ function SessionSummaryOverlay({
           </div>
           <div className="rounded-sm bg-[#1e1e1e] px-3 py-3">
             <p className="text-xs text-[#888888]">Ошибок</p>
-            <p className="text-xl font-bold text-[#f59e0b]">{summary.wrong}</p>
+            <p className="text-xl font-bold text-[#888888]">{summary.wrong}</p>
           </div>
           <div className="rounded-sm bg-[#1e1e1e] px-3 py-3">
-            <p className="text-xs text-[#888888]">Новых слов</p>
+            <p className="text-xs text-[#888888]">Изучено слов</p>
             <p className="text-xl font-bold text-[#00ff88]">
               {summary.new_words_learned}
             </p>
@@ -757,14 +750,6 @@ function SessionSummaryOverlay({
             </p>
           </div>
         </div>
-
-        {summary.level_ups > 0 && (
-          <div className="mt-4">
-            <Badge variant="success">
-              +{summary.level_ups} уровн{summary.level_ups > 1 ? 'ей' : 'ь'}
-            </Badge>
-          </div>
-        )}
 
         <Button size="lg" onClick={onClose} className="mt-6 w-full">
           На главную
@@ -786,12 +771,20 @@ export default function Train() {
   const {
     sessionId,
     exercises,
+    phases,
     currentIndex,
     isActive,
     startSession,
     nextExercise,
     addAnswer,
+    trackError,
+    startReinforcement,
     endSession: clearStore,
+    getPhaseProgress,
+    getCurrentExercise,
+    isInReinforcement,
+    errorWords,
+    reinforcementIndex,
   } = store;
 
   const [loading, setLoading] = useState(true);
@@ -811,7 +804,7 @@ export default function Train() {
         const duration = Number(searchParams.get('duration')) || 15;
         const result = await createSession({ duration_minutes: duration });
         if (!cancelled) {
-          startSession(result.session_id, result.exercises);
+          startSession(result.session_id, result.exercises, result.phases || []);
           setLoading(false);
           answerStartTime.current = Date.now();
         }
@@ -834,13 +827,36 @@ export default function Train() {
     async (answer: string) => {
       if (!sessionId || submitting) return;
 
-      const exercise = exercises[currentIndex];
+      // Get current exercise (handles both normal and reinforcement mode)
+      const exercise = getCurrentExercise();
       if (!exercise) return;
 
       const responseTime = Date.now() - answerStartTime.current;
+      const inReinforcement = isInReinforcement();
 
       setSubmitting(true);
       try {
+        // For reinforcement, we don't submit to backend - just show feedback locally
+        if (inReinforcement) {
+          // Simple check: compare answer to first translation
+          const correctAnswer = exercise.translations[0] || '';
+          const isCorrect = answer.toLowerCase().trim() === correctAnswer.toLowerCase().trim();
+
+          const localResult: AnswerResult = {
+            correct: isCorrect,
+            rating: isCorrect ? 4 : 1,
+            correct_answer: correctAnswer,
+            feedback: isCorrect ? null : `Правильный ответ: ${correctAnswer}`,
+            mastery_level: 1,
+            level_changed: false,
+          };
+
+          setFeedbackResult(localResult);
+          setSubmitting(false);
+          return;
+        }
+
+        // Normal mode - submit to backend
         const result = await submitAnswer(sessionId, {
           word_id: exercise.word_id,
           answer,
@@ -849,25 +865,34 @@ export default function Train() {
         });
         addAnswer(result);
 
+        // Track errors for reinforcement (not for Introduction)
+        if (!result.correct && exercise.exercise_type !== 1) {
+          trackError(exercise);
+        }
+
         // Level 1 (Introduction) - auto-advance without feedback overlay
         if (exercise.exercise_type === 1) {
           setSubmitting(false);
-          // Small delay before advancing
           setTimeout(() => {
             if (currentIndex >= exercises.length - 1) {
-              endSession(sessionId).then(setSummary).catch(() => {
-                const answers = useTrainingStore.getState().answers;
-                const correct = answers.filter((a) => a.correct).length;
-                setSummary({
-                  total_words: exercises.length,
-                  correct,
-                  wrong: exercises.length - correct,
-                  accuracy: exercises.length > 0 ? (correct / exercises.length) * 100 : 0,
-                  new_words_learned: 0,
-                  time_spent_seconds: 0,
-                  level_ups: 0,
+              // Check for errors before ending
+              if (startReinforcement()) {
+                answerStartTime.current = Date.now();
+              } else {
+                endSession(sessionId).then(setSummary).catch(() => {
+                  const answers = useTrainingStore.getState().answers;
+                  const correct = answers.filter((a) => a.correct).length;
+                  setSummary({
+                    total_words: exercises.length,
+                    correct,
+                    wrong: exercises.length - correct,
+                    accuracy: exercises.length > 0 ? (correct / exercises.length) * 100 : 0,
+                    new_words_learned: 0,
+                    time_spent_seconds: 0,
+                    level_ups: 0,
+                  });
                 });
-              });
+              }
             } else {
               nextExercise();
               answerStartTime.current = Date.now();
@@ -883,39 +908,78 @@ export default function Train() {
         setSubmitting(false);
       }
     },
-    [sessionId, currentIndex, exercises, submitting, addAnswer, nextExercise],
+    [sessionId, currentIndex, exercises, submitting, addAnswer, nextExercise, getCurrentExercise, isInReinforcement, trackError, startReinforcement],
   );
 
   // -- Advance to next exercise or finish -----------------------------------
   const handleContinue = useCallback(async () => {
     setFeedbackResult(null);
+    const inReinforcement = isInReinforcement();
 
+    if (inReinforcement) {
+      // In reinforcement mode
+      const errWords = useTrainingStore.getState().errorWords;
+      const reinIdx = useTrainingStore.getState().reinforcementIndex;
+
+      if (reinIdx >= errWords.length - 1) {
+        // Reinforcement complete - end session
+        if (sessionId) {
+          try {
+            const result = await endSession(sessionId);
+            setSummary(result);
+          } catch {
+            const answers = useTrainingStore.getState().answers;
+            const correct = answers.filter((a) => a.correct).length;
+            setSummary({
+              total_words: exercises.length,
+              correct,
+              wrong: exercises.length - correct,
+              accuracy: exercises.length > 0 ? (correct / exercises.length) * 100 : 0,
+              new_words_learned: 0,
+              time_spent_seconds: 0,
+              level_ups: 0,
+            });
+          }
+        }
+      } else {
+        nextExercise();
+        answerStartTime.current = Date.now();
+      }
+      return;
+    }
+
+    // Normal mode
     if (currentIndex >= exercises.length - 1) {
-      // Session is done
-      if (sessionId) {
-        try {
-          const result = await endSession(sessionId);
-          setSummary(result);
-        } catch {
-          // If end fails, still show a basic summary
-          const answers = useTrainingStore.getState().answers;
-          const correct = answers.filter((a) => a.correct).length;
-          setSummary({
-            total_words: exercises.length,
-            correct,
-            wrong: exercises.length - correct,
-            accuracy: exercises.length > 0 ? (correct / exercises.length) * 100 : 0,
-            new_words_learned: 0,
-            time_spent_seconds: 0,
-            level_ups: 0,
-          });
+      // Main exercises done - check if we need reinforcement
+      if (startReinforcement()) {
+        // Start reinforcement phase
+        answerStartTime.current = Date.now();
+      } else {
+        // No errors - end session
+        if (sessionId) {
+          try {
+            const result = await endSession(sessionId);
+            setSummary(result);
+          } catch {
+            const answers = useTrainingStore.getState().answers;
+            const correct = answers.filter((a) => a.correct).length;
+            setSummary({
+              total_words: exercises.length,
+              correct,
+              wrong: exercises.length - correct,
+              accuracy: exercises.length > 0 ? (correct / exercises.length) * 100 : 0,
+              new_words_learned: 0,
+              time_spent_seconds: 0,
+              level_ups: 0,
+            });
+          }
         }
       }
     } else {
       nextExercise();
       answerStartTime.current = Date.now();
     }
-  }, [currentIndex, exercises.length, sessionId, nextExercise]);
+  }, [currentIndex, exercises.length, sessionId, nextExercise, isInReinforcement, startReinforcement]);
 
   // -- Exit session handler -------------------------------------------------
   const handleExit = useCallback(() => {
@@ -948,20 +1012,20 @@ export default function Train() {
       <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
         <div className="flex flex-col items-center gap-4">
           <Loader2 size={32} className="animate-spin text-[#00ff88]" />
-          <p className="text-sm text-[#888888]">Preparing exercises...</p>
+          <p className="text-sm text-[#888888]">Загрузка упражнений...</p>
         </div>
       </div>
     );
   }
 
-  // -- Error state ----------------------------------------------------------
+  // -- Error state (neutral gray, not red per TRAINING-SPEC.md) -------------
   if (error) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
         <Card className="max-w-sm text-center">
-          <p className="text-red-400">{error}</p>
+          <p className="text-[#888888]">{error}</p>
           <Button variant="secondary" onClick={handleExit} className="mt-4">
-            Back to Dashboard
+            На главную
           </Button>
         </Card>
       </div>
@@ -973,9 +1037,9 @@ export default function Train() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
         <Card className="max-w-sm text-center">
-          <p className="text-[#888888]">No exercises available right now.</p>
+          <p className="text-[#888888]">Нет доступных упражнений.</p>
           <Button variant="secondary" onClick={handleExit} className="mt-4">
-            Back to Dashboard
+            На главную
           </Button>
         </Card>
       </div>
@@ -983,35 +1047,108 @@ export default function Train() {
   }
 
   // -- Current exercise -----------------------------------------------------
-  const currentExercise = exercises[currentIndex];
+  const currentExercise = getCurrentExercise();
+  if (!currentExercise) {
+    // Should not happen, but handle gracefully
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
+        <Card className="max-w-sm text-center">
+          <p className="text-[#888888]">Нет доступных упражнений.</p>
+          <Button variant="secondary" onClick={handleExit} className="mt-4">
+            На главную
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
   const ExerciseComponent = EXERCISE_COMPONENTS[currentExercise.exercise_type];
-  const progress = ((currentIndex + 1) / exercises.length) * 100;
+  const inReinforcement = isInReinforcement();
+  const totalExercises = inReinforcement ? errorWords.length : exercises.length;
+  const currentIdx = inReinforcement ? reinforcementIndex : currentIndex;
+  const progress = ((currentIdx + 1) / totalExercises) * 100;
+  const phaseProgress = getPhaseProgress();
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
       {/* Top bar: progress + exit */}
       <div className="sticky top-0 z-10 border-b border-[#2a2a2a] bg-[#0a0a0a] px-6 py-4">
-        <div className="mx-auto flex max-w-2xl items-center gap-4">
-          {/* Progress bar */}
-          <div className="flex-1">
-            <div className="h-2 w-full overflow-hidden rounded-full bg-[#1e1e1e]">
-              <div
-                className="h-full rounded-full bg-[#00ff88] transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
+        <div className="mx-auto flex max-w-2xl flex-col gap-2">
+          {/* Phase indicator */}
+          {phaseProgress && (
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <span className={cn(
+                  'rounded-sm px-2 py-0.5 font-medium',
+                  phaseProgress.phaseType === 'reinforcement'
+                    ? 'bg-[#f59e0b]/10 text-[#f59e0b]'
+                    : phaseProgress.phaseType === 'review'
+                      ? 'bg-[#00aaff]/10 text-[#00aaff]'
+                      : 'bg-[#00ff88]/10 text-[#00ff88]'
+                )}>
+                  {phaseProgress.phaseType === 'reinforcement'
+                    ? 'Закрепление'
+                    : phaseProgress.phaseType === 'review'
+                      ? 'Повторение'
+                      : 'Новые'}
+                </span>
+                <span className="text-[#888888]">
+                  {phaseProgress.phaseType === 'reinforcement'
+                    ? phaseProgress.phaseNameRu
+                    : `Фаза ${phaseProgress.phaseIndex + 1}/${phases.length}: ${phaseProgress.phaseNameRu}`}
+                </span>
+              </div>
+              <span className="font-mono text-[#888888]">
+                {phaseProgress.exerciseInPhase}/{phaseProgress.totalInPhase}
+              </span>
             </div>
+          )}
+
+          {/* Progress bars */}
+          <div className="flex items-center gap-4">
+            {/* Phase progress bar */}
+            {phaseProgress ? (
+              <div className="flex-1">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-[#1e1e1e]">
+                  <div
+                    className={cn(
+                      'h-full rounded-full transition-all duration-300',
+                      phaseProgress.phaseType === 'reinforcement'
+                        ? 'bg-[#f59e0b]'
+                        : phaseProgress.phaseType === 'review'
+                          ? 'bg-[#00aaff]'
+                          : 'bg-[#00ff88]'
+                    )}
+                    style={{ width: `${(phaseProgress.exerciseInPhase / phaseProgress.totalInPhase) * 100}%` }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-[#1e1e1e]">
+                  <div
+                    className="h-full rounded-full bg-[#00ff88] transition-all duration-300"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Overall counter */}
+            <span className="shrink-0 font-mono text-sm text-[#666666]">
+              {inReinforcement
+                ? `+${reinforcementIndex + 1}/${errorWords.length}`
+                : `${currentIndex + 1}/${exercises.length}`}
+            </span>
+
+            {/* Exit button */}
+            <button
+              onClick={handleExit}
+              className="shrink-0 rounded-sm p-1.5 text-[#666666] transition-colors hover:bg-[#1e1e1e] hover:text-[#e0e0e0]"
+            >
+              <X size={20} />
+            </button>
           </div>
-          {/* Counter */}
-          <span className="shrink-0 font-mono text-sm text-[#888888]">
-            {currentIndex + 1}/{exercises.length}
-          </span>
-          {/* Exit button */}
-          <button
-            onClick={handleExit}
-            className="shrink-0 rounded-sm p-1.5 text-[#666666] transition-colors hover:bg-[#1e1e1e] hover:text-[#e0e0e0]"
-          >
-            <X size={20} />
-          </button>
         </div>
       </div>
 
@@ -1026,14 +1163,14 @@ export default function Train() {
         ) : (
           <Card className="text-center">
             <p className="text-[#888888]">
-              Unknown exercise type: {currentExercise.exercise_type}
+              Неизвестный тип упражнения: {currentExercise.exercise_type}
             </p>
             <Button
               onClick={() => handleAnswer('skip')}
               className="mt-4"
               variant="secondary"
             >
-              Skip
+              Пропустить
             </Button>
           </Card>
         )}

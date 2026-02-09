@@ -16,7 +16,8 @@
       "Bash(npm run typecheck:*)",
       "WebSearch",
       "Bash(python -c:*)",
-      "Bash(/nix/store/2p31md1i38fng7sklgckn9vsk6aqkqi9-python3-3.13.11-env/bin/python:*)"
+      "Bash(/nix/store/2p31md1i38fng7sklgckn9vsk6aqkqi9-python3-3.13.11-env/bin/python:*)",
+      "Bash(git -C /home/user/umk-word-forge log --oneline)"
     ]
   }
 }

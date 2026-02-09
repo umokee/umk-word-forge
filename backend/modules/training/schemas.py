@@ -31,11 +31,25 @@ class SessionResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ExercisePhase(BaseModel):
+    """A phase of exercises grouped by type."""
+    phase_type: str  # "review" or "new"
+    exercise_type: int  # 1-7
+    name: str  # "Знакомство", "Recognition", "Recall", "Context"
+    name_ru: str  # Russian name for display
+    exercises: list["ExerciseResponse"]
+    count: int
+
+
 class StartSessionResponse(BaseModel):
     """Response for starting a new session with generated exercises."""
     session_id: int
-    exercises: list["ExerciseResponse"]
+    exercises: list["ExerciseResponse"]  # Flat list for backwards compat
+    phases: list[ExercisePhase] = []  # New: grouped by phases
     total_words: int
+    total_exercises: int = 0
+    review_words_count: int = 0
+    new_words_count: int = 0
     daily_limit_warning: bool = False  # True if already trained today (soft limit)
 
 
@@ -221,4 +235,5 @@ class IrregularVerbSessionResponse(BaseModel):
 
 
 # Rebuild models to resolve forward references
+ExercisePhase.model_rebuild()
 StartSessionResponse.model_rebuild()

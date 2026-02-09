@@ -17,3 +17,36 @@ def levenshtein_distance(s1: str, s2: str) -> int:
 
 def normalize_text(text: str) -> str:
     return text.strip().lower()
+
+
+def parse_json_field(value) -> list | dict | None:
+    """Safely parse a JSON field that might be a string or already parsed.
+
+    SQLite JSON columns sometimes return strings instead of parsed objects.
+    This handles both cases.
+    """
+    if value is None:
+        return None
+    if isinstance(value, (list, dict)):
+        return value
+    if isinstance(value, str):
+        import json
+        try:
+            return json.loads(value)
+        except (json.JSONDecodeError, ValueError):
+            return None
+    return None
+
+
+def get_translations(word) -> list[str]:
+    """Get translations as a list, handling JSON parsing."""
+    translations = parse_json_field(word.translations)
+    if isinstance(translations, list):
+        return translations
+    return []
+
+
+def get_first_translation(word) -> str:
+    """Get the first translation safely."""
+    translations = get_translations(word)
+    return translations[0] if translations else ""

@@ -14,6 +14,7 @@ from backend.modules.training.exercises import (
 )
 from backend.modules.settings.service import SettingsService
 from backend.shared.constants import EXERCISE_TIME_ESTIMATES
+from backend.shared.text_utils import get_first_translation, get_translations
 from .schemas import StartSessionResult
 
 
@@ -136,7 +137,7 @@ class StartSessionWorkflow:
             "word_id": word.id,
             "english": word.english,
             "transcription": word.transcription or "",
-            "translations": word.translations or [],
+            "translations": get_translations(word),
             "part_of_speech": word.part_of_speech or "",
         }
         ctx = contexts[0] if contexts else None
@@ -182,8 +183,6 @@ class StartSessionWorkflow:
         )
         result = []
         for w in words:
-            if w.translations:
-                result.append(w.translations[0] if isinstance(w.translations, list) else str(w.translations))
-            else:
-                result.append(w.english)
+            first_trans = get_first_translation(w)
+            result.append(first_trans if first_trans else w.english)
         return result

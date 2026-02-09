@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session as DBSession
 from sqlalchemy.sql.expression import func
 
 from backend.shared.date_utils import utc_now
-from backend.shared.text_utils import normalize_text, levenshtein_distance
+from backend.shared.text_utils import normalize_text, levenshtein_distance, get_translations, get_first_translation, parse_json_field
 from backend.shared.constants import CONSECUTIVE_CORRECT_TO_LEVEL_UP
 
 from . import repository
@@ -14,6 +14,7 @@ from .exceptions import SessionAlreadyEndedError
 from .schemas import (
     AnswerResult,
     AnswerSubmit,
+    ExercisePhase,
     ExerciseResponse,
     SessionProgress,
     SessionResponse,
@@ -28,6 +29,17 @@ from .schemas import (
 
 # Sequence of exercise types for new words (multiple exercises per word)
 NEW_WORD_EXERCISE_SEQUENCE = [1, 2, 3, 4]  # Intro, Recognition, Recall, Context
+
+# Exercise type names for phases
+EXERCISE_TYPE_NAMES = {
+    1: ("Introduction", "Знакомство"),
+    2: ("Recognition", "Узнавание"),
+    3: ("Recall", "Вспоминание"),
+    4: ("Context", "Контекст"),
+    5: ("Sentence Builder", "Составление предложений"),
+    6: ("Free Production", "Свободное использование"),
+    7: ("Listening", "Аудирование"),
+}
 
 
 def _generate_exercise(
@@ -53,34 +65,12 @@ def _generate_exercise(
     # Determine exercise type based on mastery level (1-7) or force_type
     exercise_type = force_type if force_type is not None else max(1, min(mastery_level, 7))
 
-    # Parse JSON fields if present
-    import json
-
-    verb_forms = None
-    collocations = None
-    phrasal_verbs = None
-    usage_notes = None
-
-    if word.verb_forms:
-        try:
-            verb_forms = json.loads(word.verb_forms) if isinstance(word.verb_forms, str) else word.verb_forms
-        except:
-            pass
-    if word.collocations:
-        try:
-            collocations = json.loads(word.collocations) if isinstance(word.collocations, str) else word.collocations
-        except:
-            pass
-    if word.phrasal_verbs:
-        try:
-            phrasal_verbs = json.loads(word.phrasal_verbs) if isinstance(word.phrasal_verbs, str) else word.phrasal_verbs
-        except:
-            pass
-    if word.usage_notes:
-        try:
-            usage_notes = json.loads(word.usage_notes) if isinstance(word.usage_notes, str) else word.usage_notes
-        except:
-            pass
+    # Parse JSON fields safely
+    verb_forms = parse_json_field(word.verb_forms)
+    collocations = parse_json_field(word.collocations)
+    phrasal_verbs = parse_json_field(word.phrasal_verbs)
+    usage_notes = parse_json_field(word.usage_notes)
+    translations = get_translations(word)
 
     # Check if this is a function word and get rich context data
     is_function_word = word.word_category in ("function", "preposition")
@@ -101,7 +91,7 @@ def _generate_exercise(
         exercise_type=exercise_type,
         english=word.english,
         transcription=word.transcription,
-        translations=word.translations or [],
+        translations=translations,
         part_of_speech=word.part_of_speech,
         sentence_en=context.sentence_en if context else None,
         sentence_ru=context.sentence_ru if context else None,
@@ -118,7 +108,7 @@ def _generate_exercise(
     # Add options for recognition/context exercises (types 2, 4)
     if exercise_type in (2, 4):
         distractors = _get_distractors(db, word_id, word.part_of_speech, count=3)
-        correct_answer = word.translations[0] if word.translations else word.english
+        correct_answer = translations[0] if translations else word.english
         options = [correct_answer] + distractors
         random.shuffle(options)
         exercise.options = options
@@ -185,8 +175,9 @@ def _get_distractors(
     words = query.order_by(func.random()).limit(count).all()
     distractors = []
     for w in words:
-        if w.translations:
-            distractors.append(w.translations[0])
+        first_trans = get_first_translation(w)
+        if first_trans:
+            distractors.append(first_trans)
     return distractors
 
 
@@ -220,17 +211,21 @@ def refresh_session_contexts(
 # ---------------------------------------------------------------------------
 
 def create_session(db: DBSession, duration_minutes: int | None = None) -> StartSessionResponse:
-    """Start a new training session with generated exercises."""
+    """Start a new training session with exercises grouped by phases.
+
+    Phase structure (per TRAINING-SPEC.md):
+    1. Review words - grouped by mastery level (all level 2, then 3, then 4...)
+    2. New words - grouped by exercise type (all Intro, then Recognition, then Recall, then Context)
+    """
     from backend.modules.learning.models import UserWord
     from backend.modules.words.models import Word
     from backend.modules.settings.repository import get_settings
     from sqlalchemy.sql.expression import func
+    from collections import defaultdict
 
     # Load user settings
     settings = get_settings(db)
 
-    # Use settings values (with fallbacks)
-    duration = duration_minutes or settings.session_duration_minutes or 15
     max_reviews = settings.max_reviews_per_session or 50
     daily_new = settings.daily_new_words or 10
     new_position = settings.new_words_position or "end"  # start/middle/end
@@ -239,8 +234,6 @@ def create_session(db: DBSession, duration_minutes: int | None = None) -> StartS
 
     # Get words for the session
     now = datetime.now(timezone.utc)
-    review_exercises: list[ExerciseResponse] = []
-    new_exercises: list[ExerciseResponse] = []
 
     # 1. Get overdue words (need review) - limited by max_reviews
     overdue_words = (
@@ -267,46 +260,83 @@ def create_session(db: DBSession, duration_minutes: int | None = None) -> StartS
         db.query(Word)
         .filter(Word.id.notin_(existing_ids))
         .order_by(Word.frequency_rank.asc().nullslast())
-        .limit(daily_new)  # Strict limit on new words
+        .limit(daily_new)
         .all()
     )
 
-    # Generate review exercises
-    for uw in overdue_words:
-        if len(review_exercises) >= max_reviews:
+    # --- Generate review exercises grouped by mastery level ---
+    review_by_level: dict[int, list[ExerciseResponse]] = defaultdict(list)
+    all_review_words = list(overdue_words) + list(learning_words)
+
+    for uw in all_review_words:
+        if sum(len(exs) for exs in review_by_level.values()) >= max_reviews:
             break
         try:
             ex = _generate_exercise(db, uw.word_id, uw.mastery_level)
-            review_exercises.append(ex)
+            review_by_level[uw.mastery_level].append(ex)
         except Exception:
             continue
 
-    for uw in learning_words:
-        if len(review_exercises) >= max_reviews:
-            break
-        try:
-            ex = _generate_exercise(db, uw.word_id, uw.mastery_level)
-            review_exercises.append(ex)
-        except Exception:
-            continue
+    # --- Generate new word exercises grouped by exercise type ---
+    new_by_type: dict[int, list[ExerciseResponse]] = defaultdict(list)
 
-    # Generate new word exercises (multiple exercises per new word)
     for word in new_words:
-        word_exercises = _generate_new_word_exercises(db, word.id)
-        new_exercises.extend(word_exercises)
+        for ex_type in NEW_WORD_EXERCISE_SEQUENCE:
+            try:
+                ex = _generate_exercise(db, word.id, mastery_level=1, force_type=ex_type)
+                new_by_type[ex_type].append(ex)
+            except Exception:
+                continue
+
+    # --- Build phases ---
+    phases: list[ExercisePhase] = []
+
+    # Review phases (sorted by level)
+    for level in sorted(review_by_level.keys()):
+        exercises = review_by_level[level]
+        if exercises:
+            name_en, name_ru = EXERCISE_TYPE_NAMES.get(level, (f"Level {level}", f"Уровень {level}"))
+            phases.append(ExercisePhase(
+                phase_type="review",
+                exercise_type=level,
+                name=name_en,
+                name_ru=name_ru,
+                exercises=exercises,
+                count=len(exercises),
+            ))
+
+    # New word phases (in sequence order: 1, 2, 3, 4)
+    for ex_type in NEW_WORD_EXERCISE_SEQUENCE:
+        exercises = new_by_type.get(ex_type, [])
+        if exercises:
+            name_en, name_ru = EXERCISE_TYPE_NAMES.get(ex_type, (f"Type {ex_type}", f"Тип {ex_type}"))
+            phases.append(ExercisePhase(
+                phase_type="new",
+                exercise_type=ex_type,
+                name=name_en,
+                name_ru=name_ru,
+                exercises=exercises,
+                count=len(exercises),
+            ))
+
+    # --- Build flat exercise list for backwards compatibility ---
+    flat_exercises: list[ExerciseResponse] = []
+
+    # Collect review and new exercises
+    review_flat = [ex for level in sorted(review_by_level.keys()) for ex in review_by_level[level]]
+    new_flat = [ex for ex_type in NEW_WORD_EXERCISE_SEQUENCE for ex in new_by_type.get(ex_type, [])]
 
     # Combine based on new_words_position setting
-    exercises: list[ExerciseResponse] = []
     if new_position == "start":
-        exercises = new_exercises + review_exercises
+        flat_exercises = new_flat + review_flat
     elif new_position == "middle":
-        mid = len(review_exercises) // 2
-        exercises = review_exercises[:mid] + new_exercises + review_exercises[mid:]
+        mid = len(review_flat) // 2
+        flat_exercises = review_flat[:mid] + new_flat + review_flat[mid:]
     else:  # "end"
-        exercises = review_exercises + new_exercises
+        flat_exercises = review_flat + new_flat
 
-    words_reviewed = len(review_exercises)
-    words_new = len(new_words)  # Count unique new words, not exercises
+    words_reviewed = len(review_flat)
+    words_new = len(new_words)
 
     # Update session with word counts
     repository.update_session(db, session.id, {
@@ -314,10 +344,25 @@ def create_session(db: DBSession, duration_minutes: int | None = None) -> StartS
         "words_new": words_new,
     })
 
+    # --- Track new words for deferred UserWord creation ---
+    from .models import SessionNewWordProgress
+
+    for word in new_words:
+        progress = SessionNewWordProgress(
+            session_id=session.id,
+            word_id=word.id,
+        )
+        db.add(progress)
+    db.commit()
+
     return StartSessionResponse(
         session_id=session.id,
-        exercises=exercises,
-        total_words=len(exercises),
+        exercises=flat_exercises,
+        phases=phases,
+        total_words=len(flat_exercises),
+        total_exercises=len(flat_exercises),
+        review_words_count=words_reviewed,
+        new_words_count=words_new,
     )
 
 
@@ -370,11 +415,17 @@ def record_answer(
     session_id: int,
     answer: AnswerSubmit,
 ) -> AnswerResult:
-    """Evaluate a learner's answer and update mastery level via FSRS."""
+    """Evaluate a learner's answer and update progress.
+
+    For NEW words: Only track results in SessionNewWordProgress.
+                   UserWord will be created at session end if >= 3/4 correct.
+    For REVIEW words: Update UserWord and FSRS as before.
+    """
     from backend.modules.words.models import Word
     from backend.modules.learning.service import LearningService
     from backend.modules.learning.schemas import ReviewCreate
     from backend.modules.learning.repository import LearningRepository
+    from .models import SessionNewWordProgress
 
     session = repository.get_session(db, session_id)
     if session.ended_at is not None:
@@ -382,7 +433,7 @@ def record_answer(
 
     # Fetch the word
     word = db.query(Word).filter(Word.id == answer.word_id).first()
-    correct_answer = word.translations[0] if word and word.translations else ""
+    correct_answer = get_first_translation(word) if word else ""
 
     # Evaluate answer
     if answer.exercise_type == 1:
@@ -407,13 +458,48 @@ def record_answer(
         update_data["correct_count"] = session.correct_count + 1
     repository.update_session(db, session_id, update_data)
 
-    # Initialize or update the word in learning system
+    # Check if this is a NEW word in this session
+    new_word_progress = (
+        db.query(SessionNewWordProgress)
+        .filter(SessionNewWordProgress.session_id == session_id)
+        .filter(SessionNewWordProgress.word_id == answer.word_id)
+        .first()
+    )
+
+    if new_word_progress:
+        # --- NEW WORD: Track result, DON'T create UserWord yet ---
+        # Update the appropriate exercise result
+        if answer.exercise_type == 1:
+            new_word_progress.exercise_1_correct = is_correct
+        elif answer.exercise_type == 2:
+            new_word_progress.exercise_2_correct = is_correct
+        elif answer.exercise_type == 3:
+            new_word_progress.exercise_3_correct = is_correct
+        elif answer.exercise_type == 4:
+            new_word_progress.exercise_4_correct = is_correct
+        db.commit()
+
+        # Return result without mastery tracking (word not learned yet)
+        feedback = None
+        if not is_correct:
+            feedback = f"Правильный ответ: {correct_answer}"
+
+        return AnswerResult(
+            correct=is_correct,
+            rating=fsrs_rating,
+            correct_answer=correct_answer,
+            feedback=feedback,
+            mastery_level=1,  # Not learned yet
+            level_changed=False,
+        )
+
+    # --- REVIEW WORD: Update UserWord and FSRS as normal ---
     learning_service = LearningService()
     learning_repo = LearningRepository()
 
     user_word = learning_repo.get_user_word(db, answer.word_id)
     if not user_word:
-        # First time seeing this word - initialize it
+        # Edge case: word should exist but doesn't, initialize it
         user_word = learning_service.initialize_word(db, answer.word_id)
 
     # Record the review to update mastery and FSRS
@@ -444,11 +530,49 @@ def record_answer(
 # ---------------------------------------------------------------------------
 
 def end_session(db: DBSession, session_id: int) -> SessionSummary:
-    """Finalize a training session and return a summary."""
+    """Finalize a training session and return a summary.
+
+    For new words: Creates UserWord only if >= 3/4 exercises were correct.
+    Words with < 3 correct will appear as new again in future sessions.
+    """
+    from backend.modules.learning.service import LearningService
+    from .models import SessionNewWordProgress
+
     session = repository.get_session(db, session_id)
     if session.ended_at is not None:
         raise SessionAlreadyEndedError(session_id)
 
+    # --- Finalize new words ---
+    new_word_progress_list = (
+        db.query(SessionNewWordProgress)
+        .filter(SessionNewWordProgress.session_id == session_id)
+        .all()
+    )
+
+    learning_service = LearningService()
+    new_words_learned = 0
+    level_ups = 0
+
+    for progress in new_word_progress_list:
+        correct_count = progress.get_correct_count()
+
+        # TRAINING-SPEC.md: Only create UserWord if >= 3 out of 4 correct
+        if correct_count >= 3:
+            try:
+                # Create UserWord starting at mastery level 2 (skip Introduction)
+                learning_service.initialize_word(db, progress.word_id, initial_mastery=2)
+                progress.learned = True
+                new_words_learned += 1
+            except Exception:
+                # Word might already exist from a previous session - that's OK
+                progress.learned = True
+        else:
+            # Word not learned - will appear as new again in future
+            progress.learned = False
+
+    db.commit()
+
+    # End the session
     session = repository.end_session(db, session_id)
 
     wrong = session.total_count - session.correct_count
@@ -463,7 +587,7 @@ def end_session(db: DBSession, session_id: int) -> SessionSummary:
         correct=session.correct_count,
         wrong=wrong,
         accuracy=accuracy,
-        new_words_learned=session.words_new,
+        new_words_learned=new_words_learned,  # Actual learned count, not attempted
         time_spent_seconds=session.duration_seconds,
-        level_ups=0,
+        level_ups=level_ups,
     )

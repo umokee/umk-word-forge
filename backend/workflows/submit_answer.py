@@ -4,7 +4,7 @@ from backend.modules.learning.schemas import ReviewCreate
 from backend.modules.training.service import TrainingService
 from backend.modules.stats.service import StatsService
 from backend.modules.words.models import Word
-from backend.shared.text_utils import normalize_text, levenshtein_distance
+from backend.shared.text_utils import normalize_text, levenshtein_distance, get_translations
 from .schemas import SubmitAnswerResult
 
 
@@ -58,7 +58,7 @@ class SubmitAnswerWorkflow:
 
         feedback = None
         if not correct:
-            translations = word.translations or []
+            translations = get_translations(word)
             feedback = f"Correct: {word.english} — {', '.join(translations)}"
 
         return SubmitAnswerResult(
@@ -74,7 +74,7 @@ class SubmitAnswerWorkflow:
     def _evaluate(
         self, word: Word, answer: str, exercise_type: int, response_time_ms: int
     ) -> tuple[bool, int, str]:
-        translations = word.translations or []
+        translations = get_translations(word)
         correct_answer = word.english
         normalized_answer = normalize_text(answer)
 

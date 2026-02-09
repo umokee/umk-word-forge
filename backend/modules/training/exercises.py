@@ -7,6 +7,7 @@ should not be imported outside this module.
 
 import random
 
+from backend.shared.text_utils import get_translations, get_first_translation
 from .schemas import ExerciseResponse
 
 
@@ -53,7 +54,7 @@ def generate_introduction(word, contexts: list | None = None) -> ExerciseRespons
         exercise_type=1,
         english=word.english,
         transcription=word.transcription,
-        translations=word.translations or [],
+        translations=get_translations(word),
         part_of_speech=word.part_of_speech,
         sentence_en=sentence_en,
         sentence_ru=sentence_ru,
@@ -72,7 +73,7 @@ def generate_recognition(word, distractors: list[str]) -> ExerciseResponse:
     English word).
     """
     reverse = random.random() < 0.3
-    primary_translation = word.translations[0] if word.translations else ""
+    primary_translation = get_first_translation(word)
 
     if reverse:
         # Given the Russian translation, choose the correct English word
@@ -82,7 +83,7 @@ def generate_recognition(word, distractors: list[str]) -> ExerciseResponse:
             exercise_type=2,
             english=word.english,
             transcription=word.transcription,
-            translations=word.translations or [],
+            translations=get_translations(word),
             part_of_speech=word.part_of_speech,
             options=options,
             reverse=True,
@@ -96,7 +97,7 @@ def generate_recognition(word, distractors: list[str]) -> ExerciseResponse:
             exercise_type=2,
             english=word.english,
             transcription=word.transcription,
-            translations=word.translations or [],
+            translations=get_translations(word),
             part_of_speech=word.part_of_speech,
             options=options,
             reverse=False,
@@ -115,7 +116,7 @@ def generate_recall(word) -> ExerciseResponse:
         exercise_type=3,
         english=word.english,
         transcription=word.transcription,
-        translations=word.translations or [],
+        translations=get_translations(word),
         part_of_speech=word.part_of_speech,
         hint="Type the translation for this word.",
     )
@@ -127,7 +128,7 @@ def generate_recall(word) -> ExerciseResponse:
 
 def generate_context(word, context, distractors: list[str]) -> ExerciseResponse:
     """Choose the correct word to fill a gap in a sentence."""
-    primary_translation = word.translations[0] if word.translations else ""
+    primary_translation = get_first_translation(word)
     options = _shuffle_options(primary_translation, distractors)
 
     sentence_en = context.sentence_en if context else None
@@ -138,7 +139,7 @@ def generate_context(word, context, distractors: list[str]) -> ExerciseResponse:
         exercise_type=4,
         english=word.english,
         transcription=word.transcription,
-        translations=word.translations or [],
+        translations=get_translations(word),
         part_of_speech=word.part_of_speech,
         options=options,
         sentence_en=sentence_en,
@@ -162,7 +163,7 @@ def generate_sentence_builder(word, context) -> ExerciseResponse:
         exercise_type=5,
         english=word.english,
         transcription=word.transcription,
-        translations=word.translations or [],
+        translations=get_translations(word),
         part_of_speech=word.part_of_speech,
         sentence_en=sentence_en,
         sentence_ru=sentence_ru,
@@ -182,7 +183,7 @@ def generate_free_production(word) -> ExerciseResponse:
         exercise_type=6,
         english=word.english,
         transcription=word.transcription,
-        translations=word.translations or [],
+        translations=get_translations(word),
         part_of_speech=word.part_of_speech,
         hint="Write a sentence using this word.",
     )
@@ -202,7 +203,7 @@ def generate_listening(word, context) -> ExerciseResponse:
         exercise_type=7,
         english=word.english,
         transcription=word.transcription,
-        translations=word.translations or [],
+        translations=get_translations(word),
         part_of_speech=word.part_of_speech,
         sentence_en=sentence_en,
         sentence_ru=sentence_ru,

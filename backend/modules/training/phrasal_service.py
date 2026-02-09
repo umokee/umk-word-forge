@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session as DBSession
 from sqlalchemy.sql.expression import func
 
-from backend.shared.text_utils import normalize_text, levenshtein_distance
+from backend.shared.text_utils import normalize_text, levenshtein_distance, get_first_translation, get_translations
 
 from . import repository
 from .exceptions import SessionAlreadyEndedError
@@ -62,7 +62,7 @@ def _generate_phrasal_verb_exercise(
         phrase=pv.phrase,
         base_verb=pv.base_verb,
         particle=pv.particle,
-        translations=pv.translations or [],
+        translations=get_translations(pv),
         definitions=pv.definitions or [],
         is_separable=pv.is_separable,
         sentence_en=context.sentence_en if context else None,
@@ -71,7 +71,7 @@ def _generate_phrasal_verb_exercise(
 
     # Type 2: Meaning Match - multiple choice with meaning distractors
     if exercise_type == 2:
-        correct_meaning = pv.translations[0] if pv.translations else ""
+        correct_meaning = get_first_translation(pv)
         distractors = _get_meaning_distractors(db, phrasal_verb_id, count=3)
         options = [correct_meaning] + distractors
         random.shuffle(options)
@@ -134,8 +134,9 @@ def _get_meaning_distractors(
     )
     distractors = []
     for pv in pvs:
-        if pv.translations:
-            distractors.append(pv.translations[0])
+        first_trans = get_first_translation(pv)
+        if first_trans:
+            distractors.append(first_trans)
     return distractors
 
 
@@ -310,7 +311,7 @@ def record_phrasal_verb_answer(
         correct_answer = pv.phrase
     elif answer.exercise_type == 2:
         # Meaning match
-        correct_answer = pv.translations[0] if pv and pv.translations else ""
+        correct_answer = get_first_translation(pv) if pv else ""
         is_correct, score = _evaluate_answer(answer.answer, correct_answer)
         fsrs_rating = _score_to_rating(is_correct, score)
     elif answer.exercise_type == 3:
